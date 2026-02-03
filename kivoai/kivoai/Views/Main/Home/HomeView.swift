@@ -31,10 +31,10 @@ struct HomeView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .principal) {
                     Text("Kivo")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(Color.kivoTextPrimary)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -53,8 +53,8 @@ struct HomeView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Welcome back ✨")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.white)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(Color.kivoTextPrimary)
             
             HStack {
                 CreditBalanceView(balance: appState.creditBalance)
@@ -79,6 +79,7 @@ struct HomeView: View {
             }
         }
         .padding(.horizontal, 20)
+        .padding(.top, 10)
     }
     
     // MARK: - Templates Section
@@ -86,8 +87,8 @@ struct HomeView: View {
     private var templatesSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Templates")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(Color.kivoTextPrimary)
                 .padding(.horizontal, 20)
             
             ForEach(TemplateCategory.allCases) { category in
@@ -108,13 +109,13 @@ struct HomeView: View {
                 Text(appState.isProSubscriber ? "Pro" : "Get Pro")
                     .font(.system(size: 14, weight: .bold))
             }
-            .foregroundColor(appState.isProSubscriber ? Color.kivoCredits : .white)
+            .foregroundColor(appState.isProSubscriber ? .white : .white)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .background(
                 Group {
                     if appState.isProSubscriber {
-                        Color.kivoCredits.opacity(0.2)
+                        Color.kivoAccent
                     } else {
                         LinearGradient(
                             colors: [Color.kivoAccent, Color.kivoPink],
@@ -126,6 +127,7 @@ struct HomeView: View {
             )
             .clipShape(Capsule())
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -142,7 +144,7 @@ struct CategorySection: View {
                 
                 Text(category.title)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.kivoTextPrimary)
             }
             .padding(.horizontal, 20)
             

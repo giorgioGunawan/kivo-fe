@@ -17,18 +17,20 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             // Tab content
-            TabView(selection: $selectedTab) {
-                HomeView()
-                    .tag(Tab.home)
-                
-                AlbumView()
-                    .tag(Tab.album)
+            Group {
+                if selectedTab == .home {
+                    HomeView()
+                } else {
+                    AlbumView()
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             
             // Custom tab bar with floating button
             CustomTabBar(selectedTab: $selectedTab)
         }
         .ignoresSafeArea(.keyboard)
+        .background(Color.kivoBackground)
     }
 }
 
@@ -71,15 +73,9 @@ struct CustomTabBar: View {
                 Spacer()
             }
             .frame(height: 60)
-            .background(
-                Color.kivoCardBackground
-                    .overlay(
-                        Color.white.opacity(0.05)
-                            .blur(radius: 1)
-                    )
-            )
+            .background(Color.kivoCardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: .black.opacity(0.3), radius: 15, x: 0, y: -5)
+            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
             .padding(.horizontal, 24)
             .padding(.bottom, 20)
             

@@ -38,10 +38,10 @@ struct AlbumView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .principal) {
                     Text("Album")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(Color.kivoTextPrimary)
                 }
             }
         }
@@ -62,7 +62,7 @@ struct AlbumView: View {
             VStack(spacing: 8) {
                 Text("No creations yet")
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.kivoTextPrimary)
                 
                 Text("Your AI-generated images will appear here")
                     .font(.system(size: 15, weight: .medium))
@@ -167,7 +167,7 @@ struct AlbumItemView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.isCustom ? "Custom" : job.templateTitle)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.kivoTextPrimary)
                     .lineLimit(1)
                 
                 Text(job.createdAt.formatted(date: .abbreviated, time: .shortened))
@@ -176,8 +176,9 @@ struct AlbumItemView: View {
             }
         }
         .padding(8)
-        .background(Color.kivoCardBackgroundLight)
+        .background(Color.kivoCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
     
     private var imagePlaceholder: some View {

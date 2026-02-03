@@ -44,7 +44,7 @@ struct TemplateCardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(template.title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.kivoTextPrimary)
                     .lineLimit(1)
                 
                 Text(template.subtitle)
@@ -53,16 +53,14 @@ struct TemplateCardView: View {
                     .lineLimit(2)
                     .frame(height: 32, alignment: .top)
             }
-            
-            // Credit cost
-            CreditBadge(cost: template.creditCost)
         }
         .padding(12)
         .background(Color.kivoCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Color.black.opacity(0.05), lineWidth: 1)
         )
         .scaleEffect(isHovered ? 1.02 : 1.0)
         .animation(.spring(response: 0.3), value: isHovered)

@@ -44,7 +44,7 @@ struct CreditBalanceView: View {
                 
                 Text("Weekly: \(balance.weekly)")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.kivoTextPrimary)
             }
             
             Text("·")
@@ -64,6 +64,11 @@ struct CreditBalanceView: View {
         .padding(.vertical, 8)
         .background(Color.kivoCardBackground)
         .clipShape(Capsule())
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .overlay(
+            Capsule()
+                .stroke(Color.black.opacity(0.05), lineWidth: 1)
+        )
     }
 }
 

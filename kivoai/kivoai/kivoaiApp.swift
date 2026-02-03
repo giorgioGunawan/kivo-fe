@@ -15,7 +15,6 @@ struct kivoaiApp: App {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(appEnvironment)
-                .preferredColorScheme(.dark)
         }
     }
 }
