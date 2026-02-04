@@ -2,6 +2,8 @@
 //  TemplateDetailView.swift
 //  kivoai
 //
+//  Content-first template detail with progressive disclosure.
+//
 
 import SwiftUI
 import PhotosUI
@@ -29,48 +31,41 @@ struct TemplateDetailView: View {
     }
     
     var body: some View {
-        ZStack {
-            LinearGradient.kivoBackground
-                .ignoresSafeArea()
-            
+        ZStack(alignment: .topLeading) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Template header
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
+                    // Header
                     headerSection
+                        .padding(.top, 60) // Space for floating back button
                     
-                    // Photo picker section
+                    // Photo picker
                     if template.requiresPhoto {
                         photoSection
                     }
                     
-                    // What to photograph hint
+                    // Hint
                     hintSection
                     
-                    // Advanced prompt section
+                    // Advanced (collapsed by default)
                     if template.showsAdvancedPrompt {
                         advancedSection
                     }
                     
-                    // Credit info
-                    creditSection
-                    
-                    // Generate button
-                    generateButton
-                    
                     Spacer()
-                        .frame(height: 40)
+                        .frame(height: AppTheme.Spacing.xl)
                 }
-                .padding(20)
+                .padding(.horizontal, AppTheme.Spacing.lg)
             }
+            
+            // Floating Back Button
+            backButton
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(template.title)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-            }
+        .navigationBarHidden(true) // Hide the bulky system bar
+        .safeAreaInset(edge: .bottom) {
+            bottomBar
         }
+        .background(AppTheme.Colors.background)
+        .toolbar(.hidden, for: .navigationBar)
         .onChange(of: selectedPhotoItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
@@ -84,42 +79,68 @@ struct TemplateDetailView: View {
         } message: {
             Text(errorMessage ?? "An unknown error occurred")
         }
+        .onAppear {
+            appState.tabBarHidden = true
+        }
+        .onDisappear {
+            appState.tabBarHidden = false
+        }
     }
     
-    // MARK: - Header Section
+    // MARK: - Back Button
+    
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(AppTheme.Colors.background)
+                        .shadow(color: AppTheme.Shadow.soft, radius: 8, x: 0, y: 2)
+                )
+        }
+        .padding(.leading, AppTheme.Spacing.md)
+        .padding(.top, 10)
+    }
+    
+    // MARK: - Header
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Category badge
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            // Category pill
+            HStack(spacing: AppTheme.Spacing.xxs) {
                 Image(systemName: template.category.iconName)
                     .font(.system(size: 12, weight: .semibold))
                 Text(template.category.title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.Typography.caption.weight(.semibold))
             }
-            .foregroundColor(Color.kivoAccent)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.kivoAccent.opacity(0.15))
+            .foregroundStyle(AppTheme.Colors.accent)
+            .padding(.horizontal, AppTheme.Spacing.sm)
+            .padding(.vertical, AppTheme.Spacing.xxs)
+            .background(AppTheme.Colors.accent.opacity(0.1))
             .clipShape(Capsule())
             
             Text(template.title)
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
+                .font(AppTheme.Typography.title)
+                .foregroundStyle(AppTheme.Colors.textPrimary)
             
             Text(template.subtitle)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(Color.kivoTextSecondary)
+                .font(AppTheme.Typography.body)
+                .foregroundStyle(AppTheme.Colors.textSecondary)
         }
     }
     
     // MARK: - Photo Section
     
     private var photoSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Your Photo", systemImage: "camera.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            Text("Your Photo")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(AppTheme.Colors.textPrimary)
             
             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                 ZStack {
@@ -127,26 +148,27 @@ struct TemplateDetailView: View {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFill()
-                            .frame(height: 200)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .frame(height: 180)
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous))
                     } else {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.kivoCardBackground)
-                            .frame(height: 200)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
+                            .fill(AppTheme.Colors.background)
+                            .frame(height: 180)
                             .overlay(
-                                VStack(spacing: 12) {
+                                VStack(spacing: AppTheme.Spacing.sm) {
                                     Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: 40, weight: .light))
-                                        .foregroundColor(Color.kivoTextSecondary)
+                                        .font(.system(size: 32, weight: .light))
+                                        .foregroundStyle(AppTheme.Colors.textTertiary)
                                     
                                     Text("Tap to select a photo")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(Color.kivoTextSecondary)
+                                        .font(AppTheme.Typography.subheadline)
+                                        .foregroundStyle(AppTheme.Colors.textSecondary)
                                 }
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.kivoAccent.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [8]))
+                                RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
+                                    .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [8]))
+                                    .foregroundStyle(AppTheme.Colors.separator)
                             )
                     }
                 }
@@ -157,38 +179,32 @@ struct TemplateDetailView: View {
     // MARK: - Hint Section
     
     private var hintSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("What to photograph", systemImage: "lightbulb.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            Label("What to photograph", systemImage: "lightbulb")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(AppTheme.Colors.textPrimary)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                 Text(template.photographHint)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color.kivoTextPrimary)
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
                 
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.kivoTextTertiary)
-                    
-                    Text("Example: \(template.exampleDescription)")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(Color.kivoTextSecondary)
-                        .italic()
-                }
+                Text("Example: \(template.exampleDescription)")
+                    .font(AppTheme.Typography.footnote)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                    .italic()
             }
-            .padding(16)
+            .padding(AppTheme.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.kivoCardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .background(AppTheme.Colors.background)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
         }
     }
     
     // MARK: - Advanced Section
     
     private var advancedSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
             Button {
                 withAnimation(.spring(response: 0.3)) {
                     showAdvanced.toggle()
@@ -196,104 +212,99 @@ struct TemplateDetailView: View {
             } label: {
                 HStack {
                     Label("Advanced Options", systemImage: "slider.horizontal.3")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
                     
                     Spacer()
                     
-                    Image(systemName: showAdvanced ? "chevron.up" : "chevron.down")
+                    Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color.kivoTextSecondary)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                        .rotationEffect(.degrees(showAdvanced ? 90 : 0))
                 }
             }
+            .buttonStyle(.plain)
             
             if showAdvanced {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text("Custom description (optional)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Color.kivoTextSecondary)
+                        .font(AppTheme.Typography.footnote)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
                     
-                    TextEditor(text: $customPrompt)
-                        .font(.system(size: 14))
-                        .scrollContentBackground(.hidden)
-                        .foregroundColor(.white)
-                        .frame(height: 100)
-                        .padding(12)
-                        .background(Color.kivoCardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    
-                    Text("💡 A base prompt is always applied to ensure quality results")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Color.kivoTextTertiary)
+                    TextField("Add specific details...", text: $customPrompt, axis: .vertical)
+                        .font(AppTheme.Typography.body)
+                        .lineLimit(3...6)
+                        .padding(AppTheme.Spacing.md)
+                        .background(AppTheme.Colors.background)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
                 }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
     
-    // MARK: - Credit Section
+    // MARK: - Bottom Bar
     
-    private var creditSection: some View {
-        HStack {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 16))
-                .foregroundColor(Color.kivoCredits)
-            
-            Text("\(template.creditCost) credits per generation")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
-            
-            Spacer()
-            
-            if !appState.hasEnoughCredits(for: template.creditCost) {
-                Text("Not enough credits")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Color.kivoError)
-            }
-        }
-        .padding(16)
-        .background(Color.kivoCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-    
-    // MARK: - Generate Button
-    
-    private var generateButton: some View {
-        Button(action: startGeneration) {
-            HStack(spacing: 10) {
-                if isGenerating {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Image(systemName: "wand.and.stars")
-                        .font(.system(size: 18, weight: .semibold))
-                }
+    private var bottomBar: some View {
+        VStack(spacing: AppTheme.Spacing.sm) {
+            // Credit info
+            HStack {
+                Image(systemName: "bolt.fill")
+                    .foregroundStyle(AppTheme.Colors.credits)
                 
-                Text(isGenerating ? "Generating..." : "Generate")
-                    .font(.system(size: 18, weight: .bold))
+                Text("\(template.creditCost) credits")
+                    .font(AppTheme.Typography.subheadline.weight(.medium))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                
+                Spacer()
+                
+                if !appState.hasEnoughCredits(for: template.creditCost) {
+                    Text("Not enough credits")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.error)
+                }
             }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(
-                canGenerate
-                    ? AnyShapeStyle(LinearGradient(
-                        colors: [Color.kivoAccent, Color.kivoPink],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ))
-                    : AnyShapeStyle(Color.gray.opacity(0.5))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            
+            // Generate button
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                startGeneration()
+            }) {
+                HStack(spacing: AppTheme.Spacing.xs) {
+                    if isGenerating {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "wand.and.stars")
+                    }
+                    
+                    Text(isGenerating ? "Generating..." : "Generate")
+                        .font(AppTheme.Typography.headline)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(canGenerate ? LinearGradient.accentGradient : LinearGradient(colors: [Color.gray.opacity(0.5)], startPoint: .leading, endPoint: .trailing))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+            }
+            .disabled(!canGenerate)
+            .buttonStyle(.plain)
         }
-        .disabled(!canGenerate)
+        .padding(.horizontal, AppTheme.Spacing.lg)
+        .padding(.top, AppTheme.Spacing.md)
+        .padding(.bottom, AppTheme.Spacing.lg)
+        .background(
+            AppTheme.Colors.background
+                .ignoresSafeArea(edges: .bottom)
+        )
     }
     
-    // MARK: - Generation Logic
+    // MARK: - Actions
     
     private func startGeneration() {
         guard canGenerate else { return }
         
-        // Consume credits
         guard appState.consumeCredits(cost: template.creditCost) else {
             errorMessage = "Not enough credits. Upgrade to Pro or buy a pack."
             showError = true
@@ -302,16 +313,13 @@ struct TemplateDetailView: View {
         
         isGenerating = true
         
-        // Save input image if provided
         var inputImageURL: URL? = nil
         if let image = selectedImage {
             inputImageURL = saveInputImage(image)
         }
         
-        // Build prompt
         let prompt = customPrompt.isEmpty ? template.subtitle : "\(template.subtitle). \(customPrompt)"
         
-        // Create job
         let job = GenerationJob(
             templateId: template.id,
             templateTitle: template.title,
@@ -322,7 +330,6 @@ struct TemplateDetailView: View {
         )
         appState.addJob(job)
         
-        // Start generation
         Task {
             appState.updateJobStatus(jobId: job.id, status: .running(progress: nil))
             

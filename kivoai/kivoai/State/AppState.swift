@@ -36,6 +36,7 @@ final class AppState: ObservableObject {
     
     @Published var showingPaywall: Bool = false
     @Published var showingCustomCreation: Bool = false
+    @Published var tabBarHidden: Bool = false
     
     // MARK: - Keys
     

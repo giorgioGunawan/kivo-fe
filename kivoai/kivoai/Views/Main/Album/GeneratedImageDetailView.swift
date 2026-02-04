@@ -2,238 +2,178 @@
 //  GeneratedImageDetailView.swift
 //  kivoai
 //
+//  Clean image detail with content-first layout.
+//
 
 import SwiftUI
 
 struct GeneratedImageDetailView: View {
     let job: GenerationJob
     
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ZStack {
-            LinearGradient.kivoBackground
-                .ignoresSafeArea()
-            
+        ZStack(alignment: .topLeading) {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Main image
+                VStack(spacing: AppTheme.Spacing.lg) {
+                    // Image
                     imageSection
                     
-                    // Info section
+                    // Info
                     infoSection
                     
-                    // Action buttons
+                    // Actions
                     actionButtons
                     
                     Spacer()
-                        .frame(height: 40)
+                        .frame(height: AppTheme.Spacing.xl)
                 }
-                .padding(20)
+                .padding(.horizontal, AppTheme.Spacing.lg)
+                .padding(.top, 60) // Space for floating back button
             }
+            
+            // Floating Back Button
+            backButton
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(job.isCustom ? "Custom Creation" : job.templateTitle)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-            }
+        .navigationBarHidden(true)
+        .background(AppTheme.Colors.background)
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            appState.tabBarHidden = true
+        }
+        .onDisappear {
+            appState.tabBarHidden = false
         }
     }
     
-    // MARK: - Image Section
+    // MARK: - Back Button
+    
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(AppTheme.Colors.background)
+                        .shadow(color: AppTheme.Shadow.soft, radius: 8, x: 0, y: 2)
+                )
+        }
+        .padding(.leading, AppTheme.Spacing.md)
+        .padding(.top, 10)
+    }
+    
+    // MARK: - Image
     
     private var imageSection: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.kivoCardBackground)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous)
+                .fill(AppTheme.Colors.secondaryBackground)
                 .aspectRatio(1, contentMode: .fit)
+                .shadow(color: AppTheme.Shadow.soft, radius: 10, x: 0, y: 4)
             
-            switch job.status {
-            case .completed(let localURL):
-                if let image = loadImage(from: localURL) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                } else {
-                    placeholderContent(icon: "photo", text: "Image not found")
-                }
-                
-            case .queued:
-                placeholderContent(icon: "clock", text: "Waiting in queue...")
-                
-            case .running(let progress):
-                VStack(spacing: 16) {
+            if case .completed(let localURL) = job.status,
+               let data = try? Data(contentsOf: localURL),
+               let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous))
+            } else {
+                VStack(spacing: AppTheme.Spacing.md) {
                     ProgressView()
-                        .scaleEffect(2)
-                        .tint(Color.kivoAccent)
-                    
-                    if let p = progress {
-                        Text("\(Int(p * 100))% complete")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.kivoTextSecondary)
-                    } else {
-                        Text("Generating your image...")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.kivoTextSecondary)
-                    }
+                    Text("Loading generation...")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
                 }
-                
-            case .failed(let message):
-                VStack(spacing: 16) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 50, weight: .light))
-                        .foregroundColor(Color.kivoError)
-                    
-                    Text("Generation Failed")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text(message)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color.kivoTextSecondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(40)
-                
-            case .idle:
-                placeholderContent(icon: "photo", text: "No image")
             }
         }
     }
     
-    private func placeholderContent(icon: String, text: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 50, weight: .light))
-                .foregroundColor(Color.kivoTextTertiary)
-            
-            Text(text)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color.kivoTextSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .aspectRatio(1, contentMode: .fit)
-    }
-    
-    // MARK: - Info Section
+    // MARK: - Info
     
     private var infoSection: some View {
-        VStack(spacing: 16) {
-            InfoRow(label: "Type", value: job.isCustom ? "Custom Creation" : "Template")
-            
-            if !job.isCustom {
-                InfoRow(label: "Template", value: job.templateTitle)
-            }
-            
-            InfoRow(label: "Created", value: job.createdAt.formatted(date: .long, time: .shortened))
-            
-            InfoRow(label: "Credits Used", value: "\(job.creditCost)")
-            
-            InfoRow(label: "Status", value: statusText, valueColor: statusColor)
-        }
-        .padding(20)
-        .background(Color.kivoCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-    
-    private var statusText: String {
-        switch job.status {
-        case .idle: return "Idle"
-        case .queued: return "Queued"
-        case .running: return "Generating"
-        case .completed: return "Completed"
-        case .failed: return "Failed"
-        }
-    }
-    
-    private var statusColor: Color {
-        switch job.status {
-        case .completed: return Color.kivoSuccess
-        case .failed: return Color.kivoError
-        case .running: return Color.kivoAccent
-        default: return Color.kivoTextSecondary
-        }
-    }
-    
-    // MARK: - Action Buttons
-    
-    @ViewBuilder
-    private var actionButtons: some View {
-        if case .completed(let localURL) = job.status,
-           let image = loadImage(from: localURL) {
-            HStack(spacing: 16) {
-                // Save to Photos
-                ShareLink(item: Image(uiImage: image), preview: SharePreview("Kivo Creation", image: Image(uiImage: image))) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Share")
-                            .font(.system(size: 16, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.kivoAccent)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            HStack {
+                Text(job.isCustom ? "Custom" : job.templateTitle)
+                    .font(AppTheme.Typography.title2)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
                 
-                // Save button
-                Button {
-                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arrow.down.to.line")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Save")
-                            .font(.system(size: 16, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.kivoCardBackgroundLight)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
+                Spacer()
+                
+                Text(job.createdAt, style: .date)
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.Colors.textTertiary)
+            }
+            
+            if !job.prompt.isEmpty {
+                Text(job.prompt)
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                    .padding(AppTheme.Spacing.md)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(AppTheme.Colors.secondaryBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
             }
         }
     }
     
-    private func loadImage(from url: URL) -> UIImage? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return UIImage(data: data)
-    }
-}
-
-struct InfoRow: View {
-    let label: String
-    let value: String
-    var valueColor: Color = .white
+    // MARK: - Actions
     
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color.kivoTextSecondary)
+    private var actionButtons: some View {
+        VStack(spacing: AppTheme.Spacing.md) {
+            Button(action: saveImage) {
+                Label("Save to Photos", systemImage: "square.and.arrow.down")
+                    .primaryButtonStyle()
+            }
+            .buttonStyle(.plain)
             
-            Spacer()
-            
-            Text(value)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(valueColor)
+            HStack(spacing: AppTheme.Spacing.md) {
+                Button(action: shareImage) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .secondaryButtonStyle()
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: deleteImage) {
+                    Label("Delete", systemImage: "trash")
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(AppTheme.Colors.error)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(AppTheme.Colors.error.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
-}
-
-#Preview {
-    NavigationStack {
-        GeneratedImageDetailView(job: GenerationJob(
-            templateId: "test",
-            templateTitle: "Mugshot Madness",
-            status: .failed(message: "Network connection lost"),
-            creditCost: 10,
-            prompt: "Test prompt"
-        ))
+    
+    // MARK: - Action Methods
+    
+    private func saveImage() {
+        if case .completed(let url) = job.status,
+           let data = try? Data(contentsOf: url),
+           let image = UIImage(data: data) {
+            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        }
+    }
+    
+    private func shareImage() {
+        if case .completed(let url) = job.status {
+            let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                rootVC.present(av, animated: true, completion: nil)
+            }
+        }
+    }
+    
+    private func deleteImage() {
+        dismiss()
     }
 }

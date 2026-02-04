@@ -2,6 +2,8 @@
 //  HomeView.swift
 //  kivoai
 //
+//  Native, content-first home screen with template browsing.
+//
 
 import SwiftUI
 
@@ -10,35 +12,28 @@ struct HomeView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                LinearGradient.kivoBackground
-                    .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Header section
-                        headerSection
-                        
-                        // Templates section
-                        templatesSection
-                        
-                        // Bottom padding for tab bar
-                        Spacer()
-                            .frame(height: 120)
-                    }
-                    .padding(.top, 8)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Templates
+                    templatesSection
+                    
+                    Spacer()
+                        .frame(height: 120)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .background(AppTheme.Colors.background)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Kivo")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(Color.kivoTextPrimary)
+                ToolbarItem(placement: .topBarLeading) {
+                    Text("Home")
+                        .font(.system(size: 28, weight: .black))
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    proButton
+                    HStack(spacing: AppTheme.Spacing.sm) {
+                        creditPill
+                        proButton
+                    }
                 }
             }
             .sheet(isPresented: $appState.showingPaywall) {
@@ -48,49 +43,30 @@ struct HomeView: View {
         }
     }
     
-    // MARK: - Header Section
+    // MARK: - Header Info
     
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Welcome back ✨")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(Color.kivoTextPrimary)
+    private var creditPill: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.credits)
             
-            HStack {
-                CreditBalanceView(balance: appState.creditBalance)
-                
-                Spacer()
-                
-                Button {
-                    appState.showingCustomCreation = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .bold))
-                        Text("Create")
-                            .font(.system(size: 14, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.kivoAccent)
-                    .clipShape(Capsule())
-                }
-            }
+            Text("\(appState.creditBalance.total)")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(AppTheme.Colors.secondaryBackground)
+        )
     }
     
-    // MARK: - Templates Section
+    // MARK: - Templates
     
     private var templatesSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Templates")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(Color.kivoTextPrimary)
-                .padding(.horizontal, 20)
-            
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(TemplateCategory.allCases) { category in
                 CategorySection(category: category)
             }
@@ -101,29 +77,23 @@ struct HomeView: View {
     
     private var proButton: some View {
         Button {
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
             appState.showingPaywall = true
         } label: {
-            HStack(spacing: 6) {
-                Image(systemName: appState.isProSubscriber ? "star.fill" : "sparkles")
-                    .font(.system(size: 14, weight: .semibold))
-                Text(appState.isProSubscriber ? "Pro" : "Get Pro")
-                    .font(.system(size: 14, weight: .bold))
+            HStack(spacing: 4) {
+                Image(systemName: appState.isProSubscriber ? "checkmark.seal.fill" : "sparkles")
+                    .font(.system(size: 11, weight: .bold))
+                Text(appState.isProSubscriber ? "Pro" : "Upgrade")
+                    .font(.system(size: 12, weight: .bold))
             }
-            .foregroundColor(appState.isProSubscriber ? .white : .white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .foregroundStyle(appState.isProSubscriber ? AppTheme.Colors.accent : .white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(
-                Group {
-                    if appState.isProSubscriber {
-                        Color.kivoAccent
-                    } else {
-                        LinearGradient(
-                            colors: [Color.kivoAccent, Color.kivoPink],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    }
-                }
+                appState.isProSubscriber
+                    ? AnyShapeStyle(AppTheme.Colors.accent.opacity(0.12))
+                    : AnyShapeStyle(LinearGradient.accentGradient)
             )
             .clipShape(Capsule())
         }
@@ -131,37 +101,49 @@ struct HomeView: View {
     }
 }
 
+// MARK: - Category Section
+
 struct CategorySection: View {
     let category: TemplateCategory
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Category header
-            HStack(spacing: 8) {
-                Image(systemName: category.iconName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color.kivoAccent)
-                
-                Text(category.title)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Color.kivoTextPrimary)
-            }
-            .padding(.horizontal, 20)
+        VStack(alignment: .leading, spacing: 0) {
+            Text(category.title)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+                .padding(.horizontal, AppTheme.Spacing.lg)
+                .padding(.top, AppTheme.Spacing.lg)
             
-            // Template horizontal scroll
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 16) {
+                LazyHStack(spacing: AppTheme.Spacing.md) {
                     ForEach(Template.templates(for: category)) { template in
                         NavigationLink(destination: TemplateDetailView(template: template)) {
                             TemplateCardView(template: template)
-                                .frame(width: 160) // Fixed width for horizontal layout
+                                .frame(width: 170)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(TemplateButtonStyle())
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppTheme.Spacing.lg)
+                .padding(.vertical, 32)
             }
         }
+    }
+}
+
+// MARK: - Button Style
+
+struct TemplateButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { oldValue, newValue in
+                if newValue {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                }
+            }
     }
 }
 

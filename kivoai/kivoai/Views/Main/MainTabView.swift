@@ -2,6 +2,9 @@
 //  MainTabView.swift
 //  kivoai
 //
+//  Tab bar following the pattern: tabs on left, floating create on right.
+//  Refined to look native with labels and material effects.
+//
 
 import SwiftUI
 
@@ -11,12 +14,12 @@ struct MainTabView: View {
     
     enum Tab {
         case home
-        case album
+        case library
     }
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Tab content
+            // Content
             Group {
                 if selectedTab == .home {
                     HomeView()
@@ -26,91 +29,118 @@ struct MainTabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            // Custom tab bar with floating button
-            CustomTabBar(selectedTab: $selectedTab)
+            // Tab Bar Area
+            tabBar
+                .offset(y: appState.tabBarHidden ? 120 : 0)
+                .opacity(appState.tabBarHidden ? 0 : 1)
         }
         .ignoresSafeArea(.keyboard)
-        .background(Color.kivoBackground)
-    }
-}
-
-struct CustomTabBar: View {
-    @Binding var selectedTab: MainTabView.Tab
-    @EnvironmentObject var appState: AppState
-    
-    var body: some View {
-        ZStack {
-            // Tab bar background
-            HStack {
-                Spacer()
-                
-                // Home tab
-                TabBarButton(
-                    icon: "house.fill",
-                    title: "Home",
-                    isSelected: selectedTab == .home
-                ) {
-                    selectedTab = .home
-                }
-                
-                Spacer()
-                
-                // Spacer for floating button
-                Color.clear
-                    .frame(width: 80)
-                
-                Spacer()
-                
-                // Album tab
-                TabBarButton(
-                    icon: "photo.stack.fill",
-                    title: "Album",
-                    isSelected: selectedTab == .album
-                ) {
-                    selectedTab = .album
-                }
-                
-                Spacer()
-            }
-            .frame(height: 60)
-            .background(Color.kivoCardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 20)
-            
-            // Floating create button
-            VStack {
-                FloatingCreateButton {
-                    appState.showingCustomCreation = true
-                }
-                .offset(y: -30)
-            }
-        }
+        .background(AppTheme.Colors.background.ignoresSafeArea())
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.tabBarHidden)
         .sheet(isPresented: $appState.showingCustomCreation) {
             CustomCreationSheet()
                 .environmentObject(appState)
         }
     }
+    
+    // MARK: - Tab Bar
+    
+    private var tabBar: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            // Left Side: Tabs in a shadowed pill
+            HStack(spacing: 0) {
+                TabButton(
+                    icon: "house.fill",
+                    label: "Home",
+                    isSelected: selectedTab == .home
+                ) {
+                    selectedTab = .home
+                }
+                
+                TabButton(
+                    icon: "photo.on.rectangle.angled.fill",
+                    label: "Library",
+                    isSelected: selectedTab == .library
+                ) {
+                    selectedTab = .library
+                }
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.12), radius: 15, x: 0, y: 8)
+            )
+            .overlay(
+                Capsule()
+                    .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+            )
+            
+            Spacer()
+            
+            // Right Side: Floating Create
+            createButton
+        }
+        .padding(.horizontal, AppTheme.Spacing.lg)
+        .padding(.bottom, 34) // Above home indicator
+    }
+    
+    private var createButton: some View {
+        Button {
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
+            appState.showingCustomCreation = true
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient.accentGradient)
+                    .frame(width: 60, height: 60)
+                
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color(white: 0.9), Color(white: 0.7), Color(white: 0.9)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: "plus")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .shadow(color: AppTheme.Colors.accent.opacity(0.35), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+    }
 }
 
-struct TabBarButton: View {
+// MARK: - Tab Button
+
+struct TabButton: View {
     let icon: String
-    let title: String
+    let label: String
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button {
+            let haptic = UIImpactFeedbackGenerator(style: .light)
+            haptic.impactOccurred()
+            action()
+        } label: {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 22, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? Color.kivoAccent : Color.kivoTextTertiary)
+                    .font(.system(size: 22, weight: isSelected ? .bold : .medium))
                 
-                Text(title)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(isSelected ? Color.kivoAccent : Color.kivoTextTertiary)
+                Text(label)
+                    .font(.system(size: 10, weight: isSelected ? .bold : .medium))
             }
+            .foregroundStyle(isSelected ? .black : Color.black.opacity(0.5))
+            .frame(width: 64, height: 48)
         }
         .buttonStyle(.plain)
     }

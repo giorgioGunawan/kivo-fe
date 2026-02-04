@@ -2,32 +2,28 @@
 //  CreditBadge.swift
 //  kivoai
 //
+//  Minimal credit display components.
+//
 
 import SwiftUI
 
 struct CreditBadge: View {
     let cost: Int
-    var showLabel: Bool = false
+    var isCompact: Bool = false
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.xxs) {
             Image(systemName: "bolt.fill")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color.kivoCredits)
+                .font(.system(size: isCompact ? 10 : 12, weight: .semibold))
             
             Text("\(cost)")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(Color.kivoCredits)
-            
-            if showLabel {
-                Text("credits")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Color.kivoTextSecondary)
-            }
+                .font(isCompact ? AppTheme.Typography.caption2 : AppTheme.Typography.footnote)
+                .fontWeight(.semibold)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.kivoCredits.opacity(0.15))
+        .foregroundStyle(AppTheme.Colors.credits)
+        .padding(.horizontal, isCompact ? AppTheme.Spacing.xs : AppTheme.Spacing.sm)
+        .padding(.vertical, isCompact ? 4 : AppTheme.Spacing.xxs)
+        .background(AppTheme.Colors.credits.opacity(0.12))
         .clipShape(Capsule())
     }
 }
@@ -36,49 +32,46 @@ struct CreditBalanceView: View {
     let balance: CreditBalance
     
     var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.xs) {
+            // Weekly
+            HStack(spacing: AppTheme.Spacing.xxs) {
                 Image(systemName: "bolt.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color.kivoCredits)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.Colors.credits)
                 
                 Text("Weekly: \(balance.weekly)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Color.kivoTextPrimary)
+                    .font(AppTheme.Typography.footnote.weight(.semibold))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
             }
             
             Text("·")
-                .foregroundColor(Color.kivoTextTertiary)
+                .foregroundStyle(AppTheme.Colors.textTertiary)
             
-            HStack(spacing: 4) {
+            // Purchased
+            HStack(spacing: AppTheme.Spacing.xxs) {
                 Image(systemName: "bag.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color.kivoTextSecondary)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
                 
                 Text("Purchased: \(balance.purchased)")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color.kivoTextSecondary)
+                    .font(AppTheme.Typography.footnote)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(Color.kivoCardBackground)
+        .padding(.horizontal, AppTheme.Spacing.md)
+        .padding(.vertical, AppTheme.Spacing.xs)
+        .background(AppTheme.Colors.background)
         .clipShape(Capsule())
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .overlay(
-            Capsule()
-                .stroke(Color.black.opacity(0.05), lineWidth: 1)
-        )
+        .shadow(color: AppTheme.Shadow.subtle, radius: 4, x: 0, y: 2)
     }
 }
 
 #Preview {
-    ZStack {
-        Color.kivoBackground.ignoresSafeArea()
-        VStack(spacing: 20) {
-            CreditBadge(cost: 15)
-            CreditBadge(cost: 25, showLabel: true)
-            CreditBalanceView(balance: CreditBalance(weekly: 450, purchased: 100))
-        }
+    VStack(spacing: 20) {
+        CreditBadge(cost: 10)
+        CreditBadge(cost: 5, isCompact: true)
+        CreditBalanceView(balance: CreditBalance(weekly: 445, purchased: 100))
     }
+    .padding()
+    .background(AppTheme.Colors.groupedBackground)
 }

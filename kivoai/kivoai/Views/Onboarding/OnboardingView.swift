@@ -2,6 +2,8 @@
 //  OnboardingView.swift
 //  kivoai
 //
+//  Calm, spacious onboarding with minimal visual noise.
+//
 
 import SwiftUI
 
@@ -11,23 +13,23 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient.kivoBackground
-                .ignoresSafeArea()
+            AppTheme.Colors.background.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Skip button
+                // Skip
                 HStack {
                     Spacer()
                     Button("Skip") {
+                        let haptic = UIImpactFeedbackGenerator(style: .light)
+                        haptic.impactOccurred()
                         completeOnboarding()
                     }
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color.kivoTextSecondary)
-                    .padding()
+                    .font(AppTheme.Typography.subheadline)
+                    .foregroundStyle(AppTheme.Colors.textTertiary)
+                    .padding(AppTheme.Spacing.lg)
                 }
                 
-                // Page content
+                // Content
                 TabView(selection: $currentStep) {
                     ForEach(OnboardingStep.allCases) { step in
                         OnboardingStepView(step: step)
@@ -36,36 +38,33 @@ struct OnboardingView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 
-                // Page indicators
-                HStack(spacing: 8) {
+                // Indicators
+                HStack(spacing: AppTheme.Spacing.xs) {
                     ForEach(OnboardingStep.allCases) { step in
-                        Circle()
-                            .fill(step == currentStep ? Color.kivoAccent : Color.kivoTextTertiary)
-                            .frame(width: 8, height: 8)
-                            .scaleEffect(step == currentStep ? 1.2 : 1.0)
+                        Capsule()
+                            .fill(step == currentStep ? AppTheme.Colors.accent : AppTheme.Colors.separator)
+                            .frame(width: step == currentStep ? 24 : 8, height: 8)
                             .animation(.spring(response: 0.3), value: currentStep)
                     }
                 }
-                .padding(.bottom, 20)
+                .padding(.bottom, AppTheme.Spacing.lg)
                 
-                // Action button
-                Button(action: handleNextAction) {
-                    Text(currentStep.isLast ? "Get Started" : "Next")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                // CTA
+                Button(action: {
+                    let haptic = UIImpactFeedbackGenerator(style: .medium)
+                    haptic.impactOccurred()
+                    handleNextAction()
+                }) {
+                    Text(currentStep.isLast ? "Get Started" : "Continue")
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.kivoAccent, Color.kivoPink],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .frame(height: 50)
+                        .background(AppTheme.Colors.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 40)
+                .padding(.horizontal, AppTheme.Spacing.lg)
+                .padding(.bottom, AppTheme.Spacing.xxl)
             }
         }
     }
@@ -90,79 +89,55 @@ struct OnboardingView: View {
     }
 }
 
+// MARK: - Step View
+
 struct OnboardingStepView: View {
     let step: OnboardingStep
     
-    @State private var iconScale: CGFloat = 0.5
-    @State private var iconOpacity: Double = 0
-    @State private var textOpacity: Double = 0
+    @State private var isVisible = false
     
     var body: some View {
-        VStack(spacing: 40) {
+        VStack(spacing: AppTheme.Spacing.xl) {
             Spacer()
             
             // Icon
             ZStack {
-                // Glow effect
                 Circle()
-                    .fill(Color.kivoAccent.opacity(0.2))
-                    .frame(width: 180, height: 180)
-                    .blur(radius: 30)
-                
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.kivoAccent.opacity(0.3), Color.kivoPink.opacity(0.3)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 140, height: 140)
+                    .fill(AppTheme.Colors.accent.opacity(0.1))
+                    .frame(width: 120, height: 120)
                 
                 Image(systemName: step.iconName)
-                    .font(.system(size: 60, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.white, Color.kivoTextSecondary],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(AppTheme.Colors.accent)
             }
-            .scaleEffect(iconScale)
-            .opacity(iconOpacity)
+            .scaleEffect(isVisible ? 1 : 0.8)
+            .opacity(isVisible ? 1 : 0)
             
-            // Text content
-            VStack(spacing: 16) {
+            // Text
+            VStack(spacing: AppTheme.Spacing.sm) {
                 Text(step.title)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(AppTheme.Typography.title)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
                     .multilineTextAlignment(.center)
                 
                 Text(step.subtitle)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color.kivoTextSecondary)
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, AppTheme.Spacing.xl)
             }
-            .opacity(textOpacity)
+            .opacity(isVisible ? 1 : 0)
             
             Spacer()
             Spacer()
         }
         .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
-                iconScale = 1.0
-                iconOpacity = 1.0
-            }
-            withAnimation(.easeOut(duration: 0.5).delay(0.3)) {
-                textOpacity = 1.0
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1)) {
+                isVisible = true
             }
         }
         .onDisappear {
-            iconScale = 0.5
-            iconOpacity = 0
-            textOpacity = 0
+            isVisible = false
         }
     }
 }

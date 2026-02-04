@@ -2,6 +2,8 @@
 //  CustomCreationSheet.swift
 //  kivoai
 //
+//  Ultra-refined, minimal creation interface.
+//
 
 import SwiftUI
 import PhotosUI
@@ -11,325 +13,307 @@ struct CustomCreationSheet: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
     
+    @StateObject private var cameraService = CameraService()
+    
     @State private var prompt: String = ""
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var isGenerating: Bool = false
     @State private var errorMessage: String?
     @State private var showError: Bool = false
+    @State private var isTextFieldActive: Bool = false
     
     private let creditCost = 20
     
     private var canGenerate: Bool {
         let hasPrompt = !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasImage = selectedImage != nil
         let hasCredits = appState.hasEnoughCredits(for: creditCost)
-        let notBusy = !isGenerating
-        return hasPrompt && hasCredits && notBusy
+        return hasPrompt && hasImage && hasCredits && !isGenerating
     }
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient.kivoBackground
-                    .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Header
-                        headerSection
-                        
-                        // Photo picker (optional)
-                        photoSection
-                        
-                        // Prompt input
-                        promptSection
-                        
-                        // Credit info
-                        creditSection
-                        
-                        // Generate button
-                        generateButton
-                        
-                        Spacer()
-                            .frame(height: 40)
-                    }
-                    .padding(20)
-                }
+        ZStack {
+            AppTheme.Colors.background.ignoresSafeArea()
+            
+            if selectedImage != nil {
+                postCaptureContent
+            } else {
+                cameraContent
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(Color.kivoTextSecondary)
-                }
-                
-                ToolbarItem(placement: .principal) {
-                    Text("Custom Creation")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                }
+        }
+        .onAppear {
+            cameraService.onPhotoCaptured = { img in
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                self.selectedImage = img
+                self.cameraService.stopSession()
             }
-            .onChange(of: selectedPhotoItem) { _, newItem in
-                Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        selectedImage = image
+            #if !targetEnvironment(simulator)
+            cameraService.checkPermissions()
+            #endif
+        }
+        .onDisappear {
+            cameraService.stopSession()
+        }
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let img = UIImage(data: data) {
+                    await MainActor.run {
+                        selectedImage = img
+                        cameraService.stopSession()
                     }
                 }
-            }
-            .alert("Generation Error", isPresented: $showError) {
-                Button("OK") { }
-            } message: {
-                Text(errorMessage ?? "An unknown error occurred")
             }
         }
     }
     
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.kivoAccent.opacity(0.3), Color.kivoPink.opacity(0.3)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                
-                Image(systemName: "wand.and.stars")
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundColor(.white)
+    // MARK: - Post Capture
+    private var postCaptureContent: some View {
+        VStack(spacing: 0) {
+            headerBar
+            
+            if let img = selectedImage {
+                ZStack(alignment: .topTrailing) {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                    
+                    Button {
+                        selectedImage = nil
+                        selectedPhotoItem = nil
+                        cameraService.startSession()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 26))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .shadow(radius: 4)
+                    }
+                    .padding(12)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
             }
             
-            Text("Create anything")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
+            Spacer(minLength: 16)
             
-            Text("Describe what you want to see and let AI bring it to life")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(Color.kivoTextSecondary)
+            // Input area with responsive text field
+            responsiveInputBar
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
         }
     }
     
-    // MARK: - Photo Section
-    
-    private var photoSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Reference Photo", systemImage: "camera.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                
-                Text("(Optional)")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color.kivoTextTertiary)
-            }
+    // MARK: - Camera View
+    private var cameraContent: some View {
+        VStack(spacing: 0) {
+            headerBar
             
-            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                ZStack {
-                    if let image = selectedImage {
-                        ZStack(alignment: .topTrailing) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 150)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                            
-                            Button {
-                                selectedImage = nil
-                                selectedPhotoItem = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
-                                    .background(Circle().fill(Color.black.opacity(0.5)))
+            // Camera preview - slightly more square aspect ratio
+            Group {
+                if cameraService.isPermissionGranted {
+                    CameraPreview(session: cameraService.session)
+                        .aspectRatio(3/4, contentMode: .fit)
+                        .clipShape(RoundedRectangle(cornerRadius: 32))
+                } else {
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(AppTheme.Colors.secondaryBackground)
+                        .aspectRatio(3/4, contentMode: .fit)
+                        .overlay {
+                            VStack(spacing: 12) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundStyle(AppTheme.Colors.textQuaternary)
+                                Text("Camera access required")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundStyle(AppTheme.Colors.textQuaternary)
                             }
-                            .padding(8)
                         }
-                    } else {
-                        HStack(spacing: 12) {
-                            Image(systemName: "photo.badge.plus")
-                                .font(.system(size: 24, weight: .light))
-                                .foregroundColor(Color.kivoTextSecondary)
-                            
-                            Text("Add a reference photo")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.kivoTextSecondary)
-                            
-                            Spacer()
-                        }
-                        .padding(20)
-                        .background(Color.kivoCardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.kivoAccent.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [6]))
-                        )
-                    }
                 }
             }
-        }
-    }
-    
-    // MARK: - Prompt Section
-    
-    private var promptSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Describe your creation", systemImage: "text.bubble.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
-            
-            ZStack(alignment: .topLeading) {
-                TextEditor(text: $prompt)
-                    .font(.system(size: 15))
-                    .scrollContentBackground(.hidden)
-                    .foregroundColor(.white)
-                    .frame(minHeight: 120)
-                    .padding(16)
-                    .background(Color.kivoCardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                
-                if prompt.isEmpty {
-                    Text("E.g., A photo of me as a superhero flying over New York City at sunset...")
-                        .font(.system(size: 15))
-                        .foregroundColor(Color.kivoTextTertiary)
-                        .padding(20)
-                        .allowsHitTesting(false)
-                }
-            }
-            
-            Text("\(prompt.count) characters")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color.kivoTextTertiary)
-        }
-    }
-    
-    // MARK: - Credit Section
-    
-    private var creditSection: some View {
-        HStack {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 16))
-                .foregroundColor(Color.kivoCredits)
-            
-            Text("\(creditCost) credits for custom creation")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
             
             Spacer()
             
-            if !appState.hasEnoughCredits(for: creditCost) {
-                Button {
-                    dismiss()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        appState.showingPaywall = true
+            // More spacing before capture buttons
+            captureBar
+                .padding(.top, 24)
+                .padding(.bottom, 32)
+        }
+    }
+    
+    // MARK: - Components
+    private var headerBar: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .padding(12)
+                    .background(Circle().fill(AppTheme.Colors.secondaryBackground))
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 5) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(AppTheme.Colors.credits)
+                Text("\(creditCost)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(AppTheme.Colors.secondaryBackground))
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+    }
+    
+    // Responsive input bar with instant tap response
+    private var responsiveInputBar: some View {
+        HStack(alignment: .center, spacing: 10) {
+            // Text input with overlay for instant tap
+            ZStack {
+                TextField("Describe your vision...", text: $prompt, axis: .vertical)
+                    .font(.system(size: 15))
+                    .lineLimit(1...4)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(Color(uiColor: .systemGray6))
+                    )
+            }
+            .frame(minHeight: 48)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            }
+            
+            // Send button - same height as text field
+            Button(action: startGeneration) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(canGenerate ? AppTheme.Colors.accent : Color(uiColor: .systemGray5))
+                        .frame(width: 48, height: 48)
+                    
+                    if isGenerating {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(canGenerate ? .white : Color(uiColor: .systemGray3))
                     }
-                } label: {
-                    Text("Get credits")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color.kivoAccent)
                 }
             }
+            .disabled(!canGenerate)
         }
-        .padding(16)
-        .background(Color.kivoCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
-    // MARK: - Generate Button
-    
-    private var generateButton: some View {
-        Button(action: startGeneration) {
-            HStack(spacing: 10) {
-                if isGenerating {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 18, weight: .semibold))
-                }
-                
-                Text(isGenerating ? "Creating magic..." : "Generate")
-                    .font(.system(size: 18, weight: .bold))
+    private var captureBar: some View {
+        HStack {
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                Image(systemName: "photo.on.rectangle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .frame(width: 52, height: 52)
+                    .background(AppTheme.Colors.secondaryBackground)
+                    .clipShape(Circle())
             }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(
-                canGenerate
-                    ? AnyShapeStyle(LinearGradient(
-                        colors: [Color.kivoAccent, Color.kivoPink],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ))
-                    : AnyShapeStyle(Color.gray.opacity(0.5))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            
+            Spacer()
+            
+            // Capture button with darker purple gradient
+            Button {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                cameraService.capturePhoto()
+            } label: {
+                ZStack {
+                    Circle()
+                        .stroke(Color.gray.opacity(0.25), lineWidth: 3)
+                        .frame(width: 76, height: 76)
+                    
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.5, green: 0.2, blue: 0.8),
+                                    Color(red: 0.35, green: 0.1, blue: 0.6)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 64, height: 64)
+                        .shadow(color: Color.purple.opacity(0.4), radius: 8, y: 4)
+                }
+            }
+            
+            Spacer()
+            
+            Button {
+                cameraService.switchCamera()
+            } label: {
+                Image(systemName: "arrow.triangle.2.circlepath.camera")
+                    .font(.system(size: 20))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .frame(width: 52, height: 52)
+                    .background(AppTheme.Colors.secondaryBackground)
+                    .clipShape(Circle())
+            }
         }
-        .disabled(!canGenerate)
+        .padding(.horizontal, 44)
     }
     
-    // MARK: - Generation Logic
-    
+    // MARK: - Actions
     private func startGeneration() {
         guard canGenerate else { return }
-        
-        // Consume credits
         guard appState.consumeCredits(cost: creditCost) else {
-            errorMessage = "Not enough credits. Upgrade to Pro or buy a pack."
+            errorMessage = "Not enough credits."
             showError = true
             return
         }
         
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         isGenerating = true
         
-        // Save input image if provided
-        var inputImageURL: URL? = nil
-        if let image = selectedImage {
-            inputImageURL = saveInputImage(image)
-        }
-        
+        let inputURL = selectedImage.flatMap { saveInputImage($0) }
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Create job
         let job = GenerationJob(
-            templateId: nil, // Custom creation
+            templateId: nil,
             templateTitle: "Custom",
             status: .queued,
             creditCost: creditCost,
             prompt: trimmedPrompt,
-            inputImageURL: inputImageURL
+            inputImageURL: inputURL
         )
         appState.addJob(job)
         
-        // Start generation
         Task {
             appState.updateJobStatus(jobId: job.id, status: .running(progress: nil))
             
             let request = GenerateImageRequest(
                 prompt: trimmedPrompt,
                 templateId: nil,
-                inputImageURL: inputImageURL,
+                inputImageURL: inputURL,
                 estimatedCreditCost: creditCost
             )
             
             do {
                 let result = try await appEnvironment.imageService.generateImage(request)
                 appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
-                
                 await MainActor.run {
                     isGenerating = false
                     dismiss()
                 }
             } catch {
                 appState.updateJobStatus(jobId: job.id, status: .failed(message: error.localizedDescription))
-                
                 await MainActor.run {
                     isGenerating = false
                     errorMessage = error.localizedDescription
@@ -340,23 +324,9 @@ struct CustomCreationSheet: View {
     }
     
     private func saveInputImage(_ image: UIImage) -> URL? {
-        let directory = FileManager.default.temporaryDirectory
-        let filename = "custom_input_\(UUID().uuidString).jpg"
-        let fileURL = directory.appendingPathComponent(filename)
-        
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("input_\(UUID().uuidString).jpg")
         guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
-        
-        do {
-            try data.write(to: fileURL)
-            return fileURL
-        } catch {
-            return nil
-        }
+        try? data.write(to: url)
+        return url
     }
-}
-
-#Preview {
-    CustomCreationSheet()
-        .environmentObject(AppState())
-        .environmentObject(AppEnvironment())
 }
