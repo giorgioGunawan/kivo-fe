@@ -10,7 +10,9 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appEnvironment: AppEnvironment
     @State private var selectedTab: Tab = .home
+    @State private var showingSignIn: Bool = false
     
     enum Tab {
         case home
@@ -37,6 +39,13 @@ struct MainTabView: View {
         .ignoresSafeArea(.keyboard)
         .background(AppTheme.Colors.background.ignoresSafeArea())
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.tabBarHidden)
+        .sheet(isPresented: $showingSignIn) {
+            SignInView {
+                showingSignIn = false
+                appState.showingCustomCreation = true
+            }
+            .environmentObject(appEnvironment.authManager)
+        }
         .sheet(isPresented: $appState.showingCustomCreation) {
             CustomCreationSheet()
                 .environmentObject(appState)
@@ -85,34 +94,27 @@ struct MainTabView: View {
         .padding(.horizontal, AppTheme.Spacing.lg)
         .padding(.bottom, 34) // Above home indicator
     }
-    
     private var createButton: some View {
         Button {
             let impact = UIImpactFeedbackGenerator(style: .medium)
             impact.impactOccurred()
-            appState.showingCustomCreation = true
+            
+            if appEnvironment.authManager.isAuthenticated {
+                appState.showingCustomCreation = true
+            } else {
+                showingSignIn = true
+            }
         } label: {
             ZStack {
                 Circle()
                     .fill(LinearGradient.accentGradient)
-                    .frame(width: 60, height: 60)
-                
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color(white: 0.9), Color(white: 0.7), Color(white: 0.9)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-                    .frame(width: 60, height: 60)
+                    .frame(width: 56, height: 56)
                 
                 Image(systemName: "plus")
-                    .font(.system(size: 26, weight: .bold))
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(.white)
             }
-            .shadow(color: AppTheme.Colors.accent.opacity(0.35), radius: 12, x: 0, y: 6)
+            .shadow(color: AppTheme.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
     }

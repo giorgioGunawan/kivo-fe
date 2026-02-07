@@ -233,25 +233,24 @@ struct CustomCreationSheet: View {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 cameraService.capturePhoto()
             } label: {
-                ZStack {
-                    Circle()
-                        .stroke(Color.gray.opacity(0.25), lineWidth: 3)
-                        .frame(width: 76, height: 76)
-                    
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.5, green: 0.2, blue: 0.8),
-                                    Color(red: 0.35, green: 0.1, blue: 0.6)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.5, green: 0.2, blue: 0.8),
+                                Color(red: 0.35, green: 0.1, blue: 0.6)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .frame(width: 64, height: 64)
-                        .shadow(color: Color.purple.opacity(0.4), radius: 8, y: 4)
-                }
+                    )
+                    .frame(width: 72, height: 72)
+                    .overlay(
+                        Circle()
+                            .stroke(.white, lineWidth: 3)
+                            .padding(4)
+                    )
+                    .shadow(color: Color.purple.opacity(0.4), radius: 10, y: 5)
             }
             
             Spacer()

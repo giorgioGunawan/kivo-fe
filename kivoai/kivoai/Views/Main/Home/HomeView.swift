@@ -9,6 +9,10 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appEnvironment: AppEnvironment
+    @State private var selectedTemplate: Template?
+    @State private var showingSignIn: Bool = false
+    @State private var showingSettings: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -24,14 +28,43 @@ struct HomeView: View {
             .background(AppTheme.Colors.background)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Text("Home")
-                        .font(.system(size: 28, weight: .black))
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                    HStack(alignment: .center, spacing: 10) {
+                        Text("Home")
+                            .font(.system(size: 28, weight: .black))
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+                        
+                        Button {
+                            let impact = UIImpactFeedbackGenerator(style: .medium)
+                            impact.impactOccurred()
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(AppTheme.Colors.textTertiary)
+                        }
+                    }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     unifiedCreditPill
                 }
+            }
+            .navigationDestination(item: $selectedTemplate) { template in
+                TemplateDetailView(template: template)
+                    .environmentObject(appState)
+                    .environmentObject(appEnvironment)
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+                    .environmentObject(appState)
+                    .environmentObject(appEnvironment)
+            }
+            .sheet(isPresented: $showingSignIn) {
+                SignInView {
+                    // Success callback
+                    showingSignIn = false
+                }
+                .environmentObject(appEnvironment.authManager)
             }
             .sheet(isPresented: $appState.showingCreditsSheet) {
                 CreditDetailsSheet()
@@ -61,16 +94,13 @@ struct HomeView: View {
                         
                         Text("\(appState.creditBalance.total)")
                             .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(AppTheme.Colors.secondaryBackground)
-                    )
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(AppTheme.Colors.secondaryBackground)
+                    .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
             } else {
                 // State B: User has ZERO credits
                 Button {
@@ -81,16 +111,14 @@ struct HomeView: View {
                     Text("Get Pro")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(LinearGradient.accentGradient)
-                        )
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(LinearGradient.accentGradient)
+                        .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
             }
         }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Templates
@@ -98,7 +126,8 @@ struct HomeView: View {
     private var templatesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(TemplateCategory.allCases) { category in
-                CategorySection(category: category)
+                CategorySection(category: category, selectedTemplate: $selectedTemplate, showingSignIn: $showingSignIn)
+                    .environmentObject(appEnvironment)
             }
         }
     }
@@ -108,6 +137,9 @@ struct HomeView: View {
 
 struct CategorySection: View {
     let category: TemplateCategory
+    @Binding var selectedTemplate: Template?
+    @Binding var showingSignIn: Bool
+    @EnvironmentObject var appEnvironment: AppEnvironment
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -120,7 +152,13 @@ struct CategorySection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: AppTheme.Spacing.md) {
                     ForEach(Template.templates(for: category)) { template in
-                        NavigationLink(destination: TemplateDetailView(template: template)) {
+                        Button {
+                            if appEnvironment.authManager.isAuthenticated {
+                                selectedTemplate = template
+                            } else {
+                                showingSignIn = true
+                            }
+                        } label: {
                             TemplateCardView(template: template)
                                 .frame(width: 170)
                         }

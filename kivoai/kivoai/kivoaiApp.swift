@@ -15,6 +15,7 @@ struct kivoaiApp: App {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(appEnvironment)
+                .environmentObject(appEnvironment.authManager)
                 .preferredColorScheme(.light)
         }
     }
