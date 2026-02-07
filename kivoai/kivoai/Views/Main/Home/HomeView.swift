@@ -30,11 +30,12 @@ struct HomeView: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: AppTheme.Spacing.sm) {
-                        creditPill
-                        proButton
-                    }
+                    unifiedCreditPill
                 }
+            }
+            .sheet(isPresented: $appState.showingCreditsSheet) {
+                CreditDetailsSheet()
+                    .environmentObject(appState)
             }
             .sheet(isPresented: $appState.showingPaywall) {
                 PaywallView()
@@ -45,22 +46,51 @@ struct HomeView: View {
     
     // MARK: - Header Info
     
-    private var creditPill: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(AppTheme.Colors.credits)
-            
-            Text("\(appState.creditBalance.total)")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(AppTheme.Colors.textPrimary)
+    private var unifiedCreditPill: some View {
+        Group {
+            if appState.creditBalance.total > 0 {
+                // State A: User has credits
+                Button {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                    appState.showingCreditsSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("🪙")
+                            .font(.system(size: 13))
+                        
+                        Text("\(appState.creditBalance.total)")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(AppTheme.Colors.secondaryBackground)
+                    )
+                }
+                .buttonStyle(.plain)
+            } else {
+                // State B: User has ZERO credits
+                Button {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
+                    appState.showingPaywall = true
+                } label: {
+                    Text("Get Pro")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(LinearGradient.accentGradient)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(AppTheme.Colors.secondaryBackground)
-        )
     }
     
     // MARK: - Templates
@@ -71,33 +101,6 @@ struct HomeView: View {
                 CategorySection(category: category)
             }
         }
-    }
-    
-    // MARK: - Pro Button
-    
-    private var proButton: some View {
-        Button {
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
-            appState.showingPaywall = true
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: appState.isProSubscriber ? "checkmark.seal.fill" : "sparkles")
-                    .font(.system(size: 11, weight: .bold))
-                Text(appState.isProSubscriber ? "Pro" : "Upgrade")
-                    .font(.system(size: 12, weight: .bold))
-            }
-            .foregroundStyle(appState.isProSubscriber ? AppTheme.Colors.accent : .white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                appState.isProSubscriber
-                    ? AnyShapeStyle(AppTheme.Colors.accent.opacity(0.12))
-                    : AnyShapeStyle(LinearGradient.accentGradient)
-            )
-            .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
     }
 }
 

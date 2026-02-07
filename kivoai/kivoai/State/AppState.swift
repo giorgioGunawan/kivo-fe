@@ -35,6 +35,7 @@ final class AppState: ObservableObject {
     @Published var generationJobs: [GenerationJob] = []
     
     @Published var showingPaywall: Bool = false
+    @Published var showingCreditsSheet: Bool = false
     @Published var showingCustomCreation: Bool = false
     @Published var tabBarHidden: Bool = false
     

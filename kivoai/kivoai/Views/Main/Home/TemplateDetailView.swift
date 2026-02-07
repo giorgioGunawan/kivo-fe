@@ -249,8 +249,8 @@ struct TemplateDetailView: View {
         VStack(spacing: AppTheme.Spacing.sm) {
             // Credit info
             HStack {
-                Image(systemName: "bolt.fill")
-                    .foregroundStyle(AppTheme.Colors.credits)
+                Text("🪙")
+                    .font(.system(size: 14))
                 
                 Text("\(template.creditCost) credits")
                     .font(AppTheme.Typography.subheadline.weight(.medium))
