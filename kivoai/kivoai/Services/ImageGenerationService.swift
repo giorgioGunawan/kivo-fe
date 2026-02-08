@@ -100,15 +100,23 @@ class KivoImageGenerationService: ImageGenerationService {
         
         // Step 4: Download result to local storage
         let (imageData, _) = try await URLSession.shared.data(from: finalUrl)
-        let localURL = try saveToTemporaryFile(data: imageData)
+        let localURL = try saveToPersistentFile(data: imageData)
         
         return GenerateImageResult(jobId: UUID(), localImageURL: localURL)
     }
     
-    private func saveToTemporaryFile(data: Data) throws -> URL {
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".jpg")
-        try data.write(to: tempURL)
-        return tempURL
+    private func saveToPersistentFile(data: Data) throws -> URL {
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let creationsURL = documentsURL.appendingPathComponent("Creations", isDirectory: true)
+        
+        if !fileManager.fileExists(atPath: creationsURL.path) {
+            try fileManager.createDirectory(at: creationsURL, withIntermediateDirectories: true)
+        }
+        
+        let fileURL = creationsURL.appendingPathComponent(UUID().uuidString + ".jpg")
+        try data.write(to: fileURL)
+        return fileURL
     }
 }
 

@@ -7,30 +7,39 @@ import Foundation
 
 enum TemplateCategory: String, CaseIterable, Identifiable {
     case pranks
-    case fashion
-    case relationships
-    case lifestyle
-    case other
+    case appearance
+    case fantasy
+    case popCulture
+    case stylization
+    case transformation
+    case surveillance
+    case status
     
     var id: String { rawValue }
     
     var title: String {
         switch self {
         case .pranks: return "Pranks"
-        case .fashion: return "Fashion"
-        case .relationships: return "Relationships"
-        case .lifestyle: return "Lifestyle"
-        case .other: return "Other"
+        case .appearance: return "Appearance"
+        case .fantasy: return "Fantasy"
+        case .popCulture: return "Pop Culture"
+        case .stylization: return "Stylization"
+        case .transformation: return "Transformation"
+        case .surveillance: return "Surveillance"
+        case .status: return "Status"
         }
     }
     
     var iconName: String {
         switch self {
         case .pranks: return "face.smiling"
-        case .fashion: return "tshirt"
-        case .relationships: return "heart.fill"
-        case .lifestyle: return "sparkles"
-        case .other: return "ellipsis.circle"
+        case .appearance: return "person.fill.viewfinder"
+        case .fantasy: return "sparkles"
+        case .popCulture: return "gamecontroller.fill"
+        case .stylization: return "paintbrush.pointed.fill"
+        case .transformation: return "figure.walk"
+        case .surveillance: return "video.fill"
+        case .status: return "star.fill"
         }
     }
 }

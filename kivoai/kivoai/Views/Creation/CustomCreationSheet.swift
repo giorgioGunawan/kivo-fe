@@ -23,7 +23,7 @@ struct CustomCreationSheet: View {
     @State private var showError: Bool = false
     @State private var isTextFieldActive: Bool = false
     
-    private let creditCost = 20
+    private let creditCost = 10
     
     private var canGenerate: Bool {
         let hasPrompt = !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -66,6 +66,9 @@ struct CustomCreationSheet: View {
                     }
                 }
             }
+        }
+        .fullScreenCover(item: $appState.activeJobId) { jobId in
+            GenerationStatusView(jobId: jobId)
         }
     }
     
@@ -203,7 +206,7 @@ struct CustomCreationSheet: View {
                     RoundedRectangle(cornerRadius: 24)
                         .fill(canGenerate ? AppTheme.Colors.accent : Color(uiColor: .systemGray5))
                     
-                    if isGenerating {
+                    if appState.activeJobId != nil {
                         ProgressView().tint(.white)
                     } else {
                         Image(systemName: "arrow.up")
@@ -283,7 +286,6 @@ struct CustomCreationSheet: View {
         guard canGenerate else { return }
         
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        isGenerating = true
         
         let inputURL = selectedImage.flatMap { saveInputImage($0) }
         let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -297,6 +299,7 @@ struct CustomCreationSheet: View {
             inputImageURL: inputURL
         )
         appState.addJob(job)
+        appState.activeJobId = job.id
         
         Task {
             appState.updateJobStatus(jobId: job.id, status: .running(progress: nil))
@@ -312,11 +315,6 @@ struct CustomCreationSheet: View {
                 let result = try await appEnvironment.imageService.generateImage(request)
                 appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
-                
-                await MainActor.run {
-                    isGenerating = false
-                    dismiss()
-                }
             } catch {
                 let message: String
                 if let apiError = error as? APIError, case .insufficientCredits = apiError {
@@ -328,23 +326,26 @@ struct CustomCreationSheet: View {
                 
                 appState.updateJobStatus(jobId: job.id, status: .failed(message: message))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
-                
-                await MainActor.run {
-                    isGenerating = false
-                    errorMessage = message
-                    showError = true
-                }
             }
         }
     }
     
     private func saveInputImage(_ image: UIImage) -> URL? {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("input_\(UUID().uuidString).jpg")
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let creationsURL = documentsURL.appendingPathComponent("Creations", isDirectory: true)
+        
+        if !fileManager.fileExists(atPath: creationsURL.path) {
+            try? fileManager.createDirectory(at: creationsURL, withIntermediateDirectories: true)
+        }
+        
+        let fileURL = creationsURL.appendingPathComponent("input_\(UUID().uuidString).jpg")
+        
         guard let resizedImage = image.resized(to: 1024),
               let data = resizedImage.jpegData(compressionQuality: 0.8) else {
             return nil
         }
-        try? data.write(to: url)
-        return url
+        try? data.write(to: fileURL)
+        return fileURL
     }
 }

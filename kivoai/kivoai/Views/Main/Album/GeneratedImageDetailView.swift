@@ -207,6 +207,8 @@ struct GeneratedImageDetailView: View {
     }
     
     private func deleteImage() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        appState.deleteJob(job)
         dismiss()
     }
 }

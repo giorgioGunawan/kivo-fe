@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum GenerationStatus: Equatable {
+enum GenerationStatus: Equatable, Codable, Hashable {
     case idle
     case queued
     case running(progress: Double?)
@@ -18,9 +18,52 @@ enum GenerationStatus: Equatable {
         default: return false
         }
     }
+    
+    enum CodingKeys: String, CodingKey {
+        case type, progress, localURL, message
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(String.self, forKey: .type)
+        switch type {
+        case "idle": self = .idle
+        case "queued": self = .queued
+        case "running":
+            let progress = try container.decodeIfPresent(Double.self, forKey: .progress)
+            self = .running(progress: progress)
+        case "completed":
+            let url = try container.decode(URL.self, forKey: .localURL)
+            self = .completed(localURL: url)
+        case "failed":
+            let message = try container.decode(String.self, forKey: .message)
+            self = .failed(message: message)
+        default:
+            self = .idle
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .idle:
+            try container.encode("idle", forKey: .type)
+        case .queued:
+            try container.encode("queued", forKey: .type)
+        case .running(let progress):
+            try container.encode("running", forKey: .type)
+            try container.encodeIfPresent(progress, forKey: .progress)
+        case .completed(let url):
+            try container.encode("completed", forKey: .type)
+            try container.encode(url, forKey: .localURL)
+        case .failed(let message):
+            try container.encode("failed", forKey: .type)
+            try container.encode(message, forKey: .message)
+        }
+    }
 }
 
-struct GenerationJob: Identifiable {
+struct GenerationJob: Identifiable, Codable, Hashable {
     let id: UUID
     let templateId: String? // nil for custom generations
     let templateTitle: String

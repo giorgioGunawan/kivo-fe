@@ -36,15 +36,12 @@ struct TemplateDetailView: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
                     // Header
                     headerSection
-                        .padding(.top, 60) // Space for floating back button
+                        .padding(.top, 60)
                     
                     // Photo picker
                     if template.requiresPhoto {
                         photoSection
                     }
-                    
-                    // Hint
-                    hintSection
                     
                     // Advanced (collapsed by default)
                     if template.showsAdvancedPrompt {
@@ -60,12 +57,15 @@ struct TemplateDetailView: View {
             // Floating Back Button
             backButton
         }
-        .navigationBarHidden(true) // Hide the bulky system bar
+        .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom) {
             bottomBar
         }
         .background(AppTheme.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $showingCamera) {
+            CameraServiceView(image: $selectedImage)
+        }
         .onChange(of: selectedPhotoItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
@@ -79,6 +79,9 @@ struct TemplateDetailView: View {
         } message: {
             Text(errorMessage ?? "An unknown error occurred")
         }
+        .fullScreenCover(item: $appState.activeJobId) { jobId in
+            GenerationStatusView(jobId: jobId)
+        }
         .onAppear {
             appState.tabBarHidden = true
         }
@@ -86,6 +89,8 @@ struct TemplateDetailView: View {
             appState.tabBarHidden = false
         }
     }
+    
+    @State private var showingCamera = false
     
     // MARK: - Back Button
     
@@ -116,23 +121,19 @@ struct TemplateDetailView: View {
             // Category pill
             HStack(spacing: AppTheme.Spacing.xxs) {
                 Image(systemName: template.category.iconName)
-                    .font(.system(size: 12, weight: .semibold))
-                Text(template.category.title)
-                    .font(AppTheme.Typography.caption.weight(.semibold))
+                    .font(.system(size: 10, weight: .bold))
+                Text(template.category.title.uppercased())
+                    .font(.system(size: 10, weight: .black))
             }
             .foregroundStyle(AppTheme.Colors.accent)
-            .padding(.horizontal, AppTheme.Spacing.sm)
-            .padding(.vertical, AppTheme.Spacing.xxs)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
             .background(AppTheme.Colors.accent.opacity(0.1))
             .clipShape(Capsule())
             
             Text(template.title)
-                .font(AppTheme.Typography.title)
+                .font(.system(size: 32, weight: .black))
                 .foregroundStyle(AppTheme.Colors.textPrimary)
-            
-            Text(template.subtitle)
-                .font(AppTheme.Typography.body)
-                .foregroundStyle(AppTheme.Colors.textSecondary)
         }
     }
     
@@ -140,66 +141,65 @@ struct TemplateDetailView: View {
     
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-            Text("Your Photo")
-                .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.Colors.textPrimary)
-            
-            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                ZStack {
-                    if let image = selectedImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 180)
-                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous))
-                    } else {
-                        RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
-                            .fill(AppTheme.Colors.background)
-                            .frame(height: 180)
-                            .overlay(
-                                VStack(spacing: AppTheme.Spacing.sm) {
-                                    Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: 32, weight: .light))
-                                        .foregroundStyle(AppTheme.Colors.textTertiary)
-                                    
-                                    Text("Tap to select a photo")
-                                        .font(AppTheme.Typography.subheadline)
-                                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                                }
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
-                                    .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [8]))
-                                    .foregroundStyle(AppTheme.Colors.separator)
-                            )
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Hint Section
-    
-    private var hintSection: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-            Label("What to photograph", systemImage: "lightbulb")
-                .font(AppTheme.Typography.headline)
-                .foregroundStyle(AppTheme.Colors.textPrimary)
-            
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                Text(template.photographHint)
-                    .font(AppTheme.Typography.body)
+            HStack {
+                Text("Your Photo")
+                    .font(AppTheme.Typography.headline)
                     .foregroundStyle(AppTheme.Colors.textPrimary)
                 
-                Text("Example: \(template.exampleDescription)")
-                    .font(AppTheme.Typography.footnote)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                    .italic()
+                Spacer()
+                
+                if selectedImage != nil {
+                    Button("Remove") {
+                        selectedImage = nil
+                        selectedPhotoItem = nil
+                    }
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AppTheme.Colors.error)
+                    .buttonStyle(.plain)
+                }
             }
-            .padding(AppTheme.Spacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppTheme.Colors.background)
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+            
+            if let image = selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+            } else {
+                HStack(spacing: 12) {
+                    Button {
+                        showingCamera = true
+                    } label: {
+                        VStack(spacing: 8) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 24))
+                            Text("Take Photo")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 120)
+                        .background(AppTheme.Colors.secondaryBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        VStack(spacing: 8) {
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 24))
+                            Text("Upload")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 120)
+                        .background(AppTheme.Colors.secondaryBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
     }
     
@@ -213,15 +213,15 @@ struct TemplateDetailView: View {
                 }
             } label: {
                 HStack {
-                    Label("Advanced Options", systemImage: "slider.horizontal.3")
-                        .font(AppTheme.Typography.headline)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                    Label("Custom prompt (Optional)", systemImage: "sparkles")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(AppTheme.Colors.textQuaternary)
                         .rotationEffect(.degrees(showAdvanced ? 90 : 0))
                 }
                 .contentShape(Rectangle())
@@ -229,19 +229,13 @@ struct TemplateDetailView: View {
             .buttonStyle(.plain)
             
             if showAdvanced {
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text("Custom description (optional)")
-                        .font(AppTheme.Typography.footnote)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                    
-                    TextField("Add specific details...", text: $customPrompt, axis: .vertical)
-                        .font(AppTheme.Typography.body)
-                        .lineLimit(3...6)
-                        .padding(AppTheme.Spacing.md)
-                        .background(AppTheme.Colors.background)
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                TextField("Add specific details...", text: $customPrompt, axis: .vertical)
+                    .font(.system(size: 15))
+                    .lineLimit(2...4)
+                    .padding(16)
+                    .background(AppTheme.Colors.secondaryBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
@@ -309,14 +303,12 @@ struct TemplateDetailView: View {
     private func startGeneration() {
         guard canGenerate else { return }
         
-        isGenerating = true
-        
         var inputImageURL: URL? = nil
         if let image = selectedImage {
             inputImageURL = saveInputImage(image)
         }
         
-        let prompt = customPrompt.isEmpty ? template.subtitle : "\(template.subtitle). \(customPrompt)"
+        let prompt = customPrompt.isEmpty ? template.basePrompt : "\(template.basePrompt). \(customPrompt)"
         
         let job = GenerationJob(
             templateId: template.id,
@@ -327,6 +319,7 @@ struct TemplateDetailView: View {
             inputImageURL: inputImageURL
         )
         appState.addJob(job)
+        appState.activeJobId = job.id
         
         Task {
             appState.updateJobStatus(jobId: job.id, status: .running(progress: nil))
@@ -342,11 +335,6 @@ struct TemplateDetailView: View {
                 let result = try await appEnvironment.imageService.generateImage(request)
                 appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
-                
-                await MainActor.run {
-                    isGenerating = false
-                    dismiss()
-                }
             } catch {
                 let message: String
                 if let apiError = error as? APIError, case .insufficientCredits = apiError {
@@ -358,20 +346,20 @@ struct TemplateDetailView: View {
                 
                 appState.updateJobStatus(jobId: job.id, status: .failed(message: message))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
-                
-                await MainActor.run {
-                    isGenerating = false
-                    errorMessage = message
-                    showError = true
-                }
             }
         }
     }
     
     private func saveInputImage(_ image: UIImage) -> URL? {
-        let directory = FileManager.default.temporaryDirectory
-        let filename = "input_\(UUID().uuidString).jpg"
-        let fileURL = directory.appendingPathComponent(filename)
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let creationsURL = documentsURL.appendingPathComponent("Creations", isDirectory: true)
+        
+        if !fileManager.fileExists(atPath: creationsURL.path) {
+            try? fileManager.createDirectory(at: creationsURL, withIntermediateDirectories: true)
+        }
+        
+        let fileURL = creationsURL.appendingPathComponent("input_\(UUID().uuidString).jpg")
         
         // Resize to a reasonable dimension for AI (max 1024px)
         guard let resizedImage = image.resized(to: 1024),

@@ -60,14 +60,20 @@ struct TemplateCardView: View {
         switch category {
         case .pranks:
             return [Color(red: 0.95, green: 0.4, blue: 0.5), Color(red: 0.85, green: 0.3, blue: 0.6)]
-        case .fashion:
+        case .appearance:
             return [Color(red: 0.7, green: 0.5, blue: 0.95), Color(red: 0.55, green: 0.4, blue: 0.9)]
-        case .relationships:
-            return [Color(red: 0.95, green: 0.55, blue: 0.6), Color(red: 0.9, green: 0.4, blue: 0.7)]
-        case .lifestyle:
-            return [Color(red: 0.4, green: 0.7, blue: 0.95), Color(red: 0.5, green: 0.5, blue: 0.9)]
-        case .other:
-            return [Color(red: 0.5, green: 0.8, blue: 0.7), Color(red: 0.4, green: 0.6, blue: 0.8)]
+        case .fantasy:
+            return [Color(red: 0.95, green: 0.55, blue: 0.8), Color(red: 0.8, green: 0.4, blue: 0.9)]
+        case .popCulture:
+            return [Color(red: 0.4, green: 0.85, blue: 0.6), Color(red: 0.3, green: 0.65, blue: 0.5)]
+        case .stylization:
+            return [Color(red: 0.95, green: 0.7, blue: 0.4), Color(red: 0.9, green: 0.5, blue: 0.3)]
+        case .transformation:
+            return [Color(red: 0.3, green: 0.5, blue: 0.8), Color(red: 0.2, green: 0.3, blue: 0.7)]
+        case .surveillance:
+            return [Color(red: 0.5, green: 0.55, blue: 0.6), Color(red: 0.3, green: 0.35, blue: 0.4)]
+        case .status:
+            return [Color(red: 0.95, green: 0.8, blue: 0.4), Color(red: 0.8, green: 0.6, blue: 0.2)]
         }
     }
 }
