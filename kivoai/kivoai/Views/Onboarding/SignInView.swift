@@ -59,11 +59,17 @@ struct SignInView: View {
             .clipShape(Capsule())
             .padding(.horizontal, 32)
             
-            Button("Not now") {
+            Button {
                 dismiss()
+            } label: {
+                Text("Not now")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(AppTheme.Colors.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .contentShape(Rectangle())
             }
-            .font(.system(size: 15, weight: .medium))
-            .foregroundStyle(AppTheme.Colors.textTertiary)
+            .buttonStyle(.plain)
             .padding(.bottom, 20)
         }
         .padding()
@@ -74,12 +80,12 @@ struct SignInView: View {
         switch result {
         case .success(let authorization):
             guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let identityTokenData = appleIDCredential.identityToken,
-                  let identityToken = String(data: identityTokenData, encoding: .utf8) else {
+                  let _ = appleIDCredential.identityToken,
+                  let _ = String(data: appleIDCredential.identityToken!, encoding: .utf8) else {
                 return
             }
             
-            let userIdentifier = appleIDCredential.user
+            let _ = appleIDCredential.user
             
             Task {
                 // We use the internal exchange logic here

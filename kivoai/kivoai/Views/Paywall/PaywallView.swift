@@ -77,7 +77,10 @@ struct PaywallView: View {
                             .font(.system(size: 28))
                             .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(AppTheme.Colors.textTertiary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -155,6 +158,7 @@ struct PaywallView: View {
                 .frame(height: 50)
                 .background(AppTheme.Colors.accent)
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -274,6 +278,7 @@ struct PlanCard: View {
                 RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
                     .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 2)
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

@@ -20,9 +20,12 @@ struct CreditDetailsSheet: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
                         .font(.system(size: 24))
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, AppTheme.Spacing.lg)
             .padding(.top, AppTheme.Spacing.lg)
@@ -85,7 +88,9 @@ struct CreditDetailsSheet: View {
                                 .opacity(0.8)
                         }
                         .primaryButtonStyle()
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     
                     // Case 4 Secondary CTA
                     Button {
@@ -96,7 +101,9 @@ struct CreditDetailsSheet: View {
                             .foregroundStyle(AppTheme.Colors.accent)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
+                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 } else {
                     // Case 1-3 Optional CTA
                     Button {
@@ -107,7 +114,9 @@ struct CreditDetailsSheet: View {
                             .foregroundStyle(AppTheme.Colors.accent)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
+                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, AppTheme.Spacing.lg)

@@ -152,9 +152,11 @@ struct CustomCreationSheet: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(AppTheme.Colors.textPrimary)
-                    .padding(12)
+                    .frame(width: 40, height: 40)
                     .background(Circle().fill(AppTheme.Colors.secondaryBackground))
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             
             Spacer()
             
@@ -200,7 +202,6 @@ struct CustomCreationSheet: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 24)
                         .fill(canGenerate ? AppTheme.Colors.accent : Color(uiColor: .systemGray5))
-                        .frame(width: 48, height: 48)
                     
                     if isGenerating {
                         ProgressView().tint(.white)
@@ -210,7 +211,10 @@ struct CustomCreationSheet: View {
                             .foregroundStyle(canGenerate ? .white : Color(uiColor: .systemGray3))
                     }
                 }
+                .frame(width: 48, height: 48)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .disabled(!canGenerate)
         }
     }
@@ -224,6 +228,7 @@ struct CustomCreationSheet: View {
                     .frame(width: 52, height: 52)
                     .background(AppTheme.Colors.secondaryBackground)
                     .clipShape(Circle())
+                    .contentShape(Rectangle())
             }
             
             Spacer()
@@ -251,7 +256,9 @@ struct CustomCreationSheet: View {
                             .padding(4)
                     )
                     .shadow(color: Color.purple.opacity(0.4), radius: 10, y: 5)
+                    .contentShape(Circle())
             }
+            .buttonStyle(.plain)
             
             Spacer()
             
@@ -264,7 +271,9 @@ struct CustomCreationSheet: View {
                     .frame(width: 52, height: 52)
                     .background(AppTheme.Colors.secondaryBackground)
                     .clipShape(Circle())
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 44)
     }

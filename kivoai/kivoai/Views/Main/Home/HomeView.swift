@@ -33,15 +33,15 @@ struct HomeView: View {
                             .font(.system(size: 28, weight: .black))
                             .foregroundStyle(AppTheme.Colors.textPrimary)
                         
-                        Button {
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
-                            showingSettings = true
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(AppTheme.Colors.textTertiary)
-                        }
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(AppTheme.Colors.textTertiary)
+                            .frame(height: 28)
+                            .onTapGesture {
+                                let impact = UIImpactFeedbackGenerator(style: .medium)
+                                impact.impactOccurred()
+                                showingSettings = true
+                            }
                     }
                 }
                 
@@ -79,46 +79,46 @@ struct HomeView: View {
     
     // MARK: - Header Info
     
+    @ViewBuilder
     private var unifiedCreditPill: some View {
-        Group {
-            if appState.creditBalance.total > 0 {
-                // State A: User has credits
-                Button {
-                    let impact = UIImpactFeedbackGenerator(style: .light)
-                    impact.impactOccurred()
-                    appState.showingCreditsSheet = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("🪙")
-                            .font(.system(size: 13))
-                        
-                        Text("\(appState.creditBalance.total)")
-                            .font(.system(size: 13, weight: .bold))
-                    }
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(AppTheme.Colors.secondaryBackground)
-                    .clipShape(Capsule())
-                }
-            } else {
-                // State B: User has ZERO credits
-                Button {
+        if appState.creditBalance.total > 0 {
+            // State A: User has credits
+            HStack(spacing: 4) {
+                Text("🪙")
+                    .font(.system(size: 13))
+                
+                Text("\(appState.creditBalance.total)")
+                    .font(.system(size: 13, weight: .bold))
+            }
+            .foregroundColor(AppTheme.Colors.textPrimary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(AppTheme.Colors.secondaryBackground)
+            )
+            .onTapGesture {
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
+                appState.showingCreditsSheet = true
+            }
+        } else {
+            // State B: User has ZERO credits
+            Text("Get Pro")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(LinearGradient.accentGradient)
+                )
+                .onTapGesture {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
                     appState.showingPaywall = true
-                } label: {
-                    Text("Get Pro")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(LinearGradient.accentGradient)
-                        .clipShape(Capsule())
                 }
-            }
         }
-        .buttonStyle(.plain)
     }
     
     // MARK: - Templates

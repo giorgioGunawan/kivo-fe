@@ -19,14 +19,19 @@ struct OnboardingView: View {
                 // Skip
                 HStack {
                     Spacer()
-                    Button("Skip") {
+                    Button {
                         let haptic = UIImpactFeedbackGenerator(style: .light)
                         haptic.impactOccurred()
                         completeOnboarding()
+                    } label: {
+                        Text("Skip")
+                            .font(AppTheme.Typography.subheadline)
+                            .foregroundStyle(AppTheme.Colors.textTertiary)
+                            .frame(height: 44)
+                            .padding(.horizontal, AppTheme.Spacing.lg)
+                            .contentShape(Rectangle())
                     }
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(AppTheme.Colors.textTertiary)
-                    .padding(AppTheme.Spacing.lg)
+                    .buttonStyle(.plain)
                 }
                 
                 // Content
@@ -62,7 +67,9 @@ struct OnboardingView: View {
                         .frame(height: 50)
                         .background(AppTheme.Colors.accent)
                         .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .padding(.horizontal, AppTheme.Spacing.lg)
                 .padding(.bottom, AppTheme.Spacing.xxl)
             }

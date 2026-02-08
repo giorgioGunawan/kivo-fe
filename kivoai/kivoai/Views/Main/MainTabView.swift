@@ -115,6 +115,7 @@ struct MainTabView: View {
                     .foregroundStyle(.white)
             }
             .shadow(color: AppTheme.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
+            .contentShape(Circle())
         }
         .buttonStyle(.plain)
     }
@@ -143,6 +144,7 @@ struct TabButton: View {
             }
             .foregroundStyle(isSelected ? .black : Color.black.opacity(0.5))
             .frame(width: 64, height: 48)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

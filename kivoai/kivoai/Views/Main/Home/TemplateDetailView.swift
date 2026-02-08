@@ -102,7 +102,9 @@ struct TemplateDetailView: View {
                         .fill(AppTheme.Colors.background)
                         .shadow(color: AppTheme.Shadow.soft, radius: 8, x: 0, y: 2)
                 )
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .padding(.leading, AppTheme.Spacing.md)
         .padding(.top, 10)
     }
@@ -222,6 +224,7 @@ struct TemplateDetailView: View {
                         .foregroundStyle(AppTheme.Colors.textTertiary)
                         .rotationEffect(.degrees(showAdvanced ? 90 : 0))
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             
@@ -287,6 +290,7 @@ struct TemplateDetailView: View {
                 .frame(height: 50)
                 .background(canGenerate ? LinearGradient.accentGradient : LinearGradient(colors: [Color.gray.opacity(0.5)], startPoint: .leading, endPoint: .trailing))
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                .contentShape(Rectangle())
             }
             .disabled(!canGenerate)
             .buttonStyle(.plain)
