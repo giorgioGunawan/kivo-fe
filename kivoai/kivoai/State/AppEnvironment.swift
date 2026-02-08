@@ -11,10 +11,11 @@ final class AppEnvironment: ObservableObject {
     let authManager: AuthManager
     let apiClient: APIClient
     
-    init(imageService: ImageGenerationService = MockImageGenerationService()) {
-        self.imageService = imageService
-        let auth = AuthManager()
+    init() {
+        let auth = AuthManager(backend: RealAuthBackend())
         self.authManager = auth
-        self.apiClient = APIClient(authManager: auth)
+        let client = APIClient(authManager: auth)
+        self.apiClient = client
+        self.imageService = KivoImageGenerationService(apiClient: client)
     }
 }

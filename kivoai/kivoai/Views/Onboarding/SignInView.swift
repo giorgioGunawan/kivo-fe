@@ -79,25 +79,14 @@ struct SignInView: View {
     private func handleAuthorization(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
-            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let _ = appleIDCredential.identityToken,
-                  let _ = String(data: appleIDCredential.identityToken!, encoding: .utf8) else {
-                return
-            }
-            
-            let _ = appleIDCredential.user
-            
             Task {
-                // We use the internal exchange logic here
-                // Note: In a real app we'd call authManager.completeSignIn(identityToken, userIdentifier)
-                // For now we'll trigger the authManager flow we already built but streamlined
-                try? await authManager.signInWithApple() // This triggers the system sheet again, but since we are handling result here...
-                // Actually let's just use the result directly if we wanted to avoid double sheet.
-                // But user wants a PAGE with a button. Tapping this button WILL show the system sheet.
-                // So this is correct: Page -> Button -> System Sheet.
-                
-                if authManager.isAuthenticated {
-                    onSignInSuccess()
+                do {
+                    try await authManager.completeSignInWithApple(authorization: authorization)
+                    if authManager.isAuthenticated {
+                        onSignInSuccess()
+                    }
+                } catch {
+                    print("Auth exchange failed: \(error.localizedDescription)")
                 }
             }
             

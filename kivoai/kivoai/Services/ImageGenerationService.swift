@@ -36,3 +36,89 @@ enum ImageGenerationError: Error, LocalizedError {
 protocol ImageGenerationService {
     func generateImage(_ request: GenerateImageRequest) async throws -> GenerateImageResult
 }
+
+class KivoImageGenerationService: ImageGenerationService {
+    private let apiClient: APIClient
+    
+    init(apiClient: APIClient) {
+        self.apiClient = apiClient
+    }
+    
+    func generateImage(_ request: GenerateImageRequest) async throws -> GenerateImageResult {
+        // Step 1: Upload image if present
+        var remoteImageUrl: String? = nil
+        if let localURL = request.inputImageURL,
+           let data = try? Data(contentsOf: localURL) {
+            let filename = localURL.lastPathComponent.contains(".png") ? "input.png" : "input.jpg"
+            remoteImageUrl = try await apiClient.uploadImage(data: data, filename: filename)
+        }
+        
+        // Step 2: Create generation job
+        let createJobBody: [String: Any] = [
+            "media_type": "image",
+            "model": "grok-imagine/image-to-image",
+            "prompt": request.prompt,
+            "input_image_url": remoteImageUrl ?? ""
+        ]
+        
+        let jsonData = try JSONSerialization.data(withJSONObject: createJobBody)
+        let createJobResponse: CreateJobResponse = try await apiClient.performRequest(
+            endpoint: "jobs",
+            method: "POST",
+            body: jsonData
+        )
+        
+        let jobId = createJobResponse.jobId
+        
+        // Step 3: Polling
+        var resultUrl: String? = nil
+        var attempts = 0
+        let maxAttempts = 30 // 30 * 3 seconds = 90 seconds timeout
+        
+        while attempts < maxAttempts {
+            try await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+            attempts += 1
+            
+            let statusResponse: JobStatusResponse = try await apiClient.performRequest(endpoint: "jobs/\(jobId)")
+            
+            if statusResponse.status == "completed" {
+                if let urlString = statusResponse.resultUrl, !urlString.isEmpty {
+                    resultUrl = urlString
+                    break
+                } else {
+                    throw ImageGenerationError.processingFailed
+                }
+            } else if statusResponse.status == "failed" {
+                throw ImageGenerationError.processingFailed
+            }
+            // Otherwise continues polling for "queued" or "processing"
+        }
+        
+        guard let finalUrlString = resultUrl, let finalUrl = URL(string: finalUrlString) else {
+            throw ImageGenerationError.networkError
+        }
+        
+        // Step 4: Download result to local storage
+        let (imageData, _) = try await URLSession.shared.data(from: finalUrl)
+        let localURL = try saveToTemporaryFile(data: imageData)
+        
+        return GenerateImageResult(jobId: UUID(), localImageURL: localURL)
+    }
+    
+    private func saveToTemporaryFile(data: Data) throws -> URL {
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".jpg")
+        try data.write(to: tempURL)
+        return tempURL
+    }
+}
+
+struct CreateJobResponse: Decodable {
+    let jobId: Int
+    let status: String
+}
+
+struct JobStatusResponse: Decodable {
+    let jobId: Int?
+    let status: String
+    let resultUrl: String?
+}

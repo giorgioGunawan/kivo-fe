@@ -39,7 +39,7 @@ struct CreditBalanceView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(AppTheme.Colors.credits)
                 
-                Text("Weekly: \(balance.weekly)")
+                Text("Weekly: \(balance.weeklyRemaining)")
                     .font(AppTheme.Typography.footnote.weight(.semibold))
                     .foregroundStyle(AppTheme.Colors.textPrimary)
             }
@@ -53,7 +53,7 @@ struct CreditBalanceView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(AppTheme.Colors.textSecondary)
                 
-                Text("Purchased: \(balance.purchased)")
+                Text("Purchased: \(balance.purchasedRemaining)")
                     .font(AppTheme.Typography.footnote)
                     .foregroundStyle(AppTheme.Colors.textSecondary)
             }
@@ -70,7 +70,7 @@ struct CreditBalanceView: View {
     VStack(spacing: 20) {
         CreditBadge(cost: 10)
         CreditBadge(cost: 5, isCompact: true)
-        CreditBalanceView(balance: CreditBalance(weekly: 445, purchased: 100))
+        CreditBalanceView(balance: CreditBalance(weeklyRemaining: 445, purchasedRemaining: 100, weeklyResetAt: nil))
     }
     .padding()
     .background(AppTheme.Colors.groupedBackground)

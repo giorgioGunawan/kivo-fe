@@ -309,12 +309,6 @@ struct TemplateDetailView: View {
     private func startGeneration() {
         guard canGenerate else { return }
         
-        guard appState.consumeCredits(cost: template.creditCost) else {
-            errorMessage = "Not enough credits. Upgrade to Pro or buy a pack."
-            showError = true
-            return
-        }
-        
         isGenerating = true
         
         var inputImageURL: URL? = nil
@@ -347,17 +341,27 @@ struct TemplateDetailView: View {
             do {
                 let result = try await appEnvironment.imageService.generateImage(request)
                 appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
+                await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
                 
                 await MainActor.run {
                     isGenerating = false
                     dismiss()
                 }
             } catch {
-                appState.updateJobStatus(jobId: job.id, status: .failed(message: error.localizedDescription))
+                let message: String
+                if let apiError = error as? APIError, case .insufficientCredits = apiError {
+                    message = "Insufficient credits. Please upgrade to Pro."
+                    appState.showingPaywall = true
+                } else {
+                    message = error.localizedDescription
+                }
+                
+                appState.updateJobStatus(jobId: job.id, status: .failed(message: message))
+                await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
                 
                 await MainActor.run {
                     isGenerating = false
-                    errorMessage = error.localizedDescription
+                    errorMessage = message
                     showError = true
                 }
             }
@@ -369,7 +373,11 @@ struct TemplateDetailView: View {
         let filename = "input_\(UUID().uuidString).jpg"
         let fileURL = directory.appendingPathComponent(filename)
         
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        // Resize to a reasonable dimension for AI (max 1024px)
+        guard let resizedImage = image.resized(to: 1024),
+              let data = resizedImage.jpegData(compressionQuality: 0.8) else {
+            return nil
+        }
         
         do {
             try data.write(to: fileURL)

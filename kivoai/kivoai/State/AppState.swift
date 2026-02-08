@@ -19,16 +19,14 @@ final class AppState: ObservableObject {
     @Published var isProSubscriber: Bool {
         didSet {
             UserDefaults.standard.set(isProSubscriber, forKey: Keys.isProSubscriber)
-            if isProSubscriber {
-                ensureInitialCreditsIfNeeded()
-            }
         }
     }
     
     @Published var creditBalance: CreditBalance {
         didSet {
-            UserDefaults.standard.set(creditBalance.weekly, forKey: Keys.weeklyCredits)
-            UserDefaults.standard.set(creditBalance.purchased, forKey: Keys.purchasedCredits)
+            UserDefaults.standard.set(creditBalance.weeklyRemaining, forKey: Keys.weeklyCredits)
+            UserDefaults.standard.set(creditBalance.purchasedRemaining, forKey: Keys.purchasedCredits)
+            UserDefaults.standard.set(creditBalance.weeklyResetAt, forKey: Keys.weeklyResetAt)
         }
     }
     
@@ -46,6 +44,7 @@ final class AppState: ObservableObject {
         static let isProSubscriber = "isProSubscriber"
         static let weeklyCredits = "weeklyCredits"
         static let purchasedCredits = "purchasedCredits"
+        static let weeklyResetAt = "weeklyResetAt"
     }
     
     // MARK: - Init
@@ -56,25 +55,21 @@ final class AppState: ObservableObject {
         
         let weekly = UserDefaults.standard.integer(forKey: Keys.weeklyCredits)
         let purchased = UserDefaults.standard.integer(forKey: Keys.purchasedCredits)
-        self.creditBalance = CreditBalance(weekly: weekly, purchased: purchased)
+        let resetAt = UserDefaults.standard.string(forKey: Keys.weeklyResetAt)
+        self.creditBalance = CreditBalance(weeklyRemaining: weekly, purchasedRemaining: purchased, weeklyResetAt: resetAt)
     }
     
     // MARK: - Credit Methods
     
-    func ensureInitialCreditsIfNeeded() {
-        if isProSubscriber && creditBalance.weekly == 0 {
-            creditBalance.weekly = 500
+    func refreshCreditBalance(apiClient: APIClient) async {
+        do {
+            let backendBalance = try await apiClient.fetchBalance()
+            self.creditBalance = backendBalance
+            // If user has credits or is identified as pro by the backend, we might want to update isProSubscriber locally too if needed
+            // For now, let's just sync the balance
+        } catch {
+            print("Failed to refresh credit balance: \(error.localizedDescription)")
         }
-    }
-    
-    func consumeCredits(cost: Int) -> Bool {
-        guard creditBalance.total >= cost else { return false }
-        var balance = creditBalance
-        let success = balance.consume(cost)
-        if success {
-            creditBalance = balance
-        }
-        return success
     }
     
     func hasEnoughCredits(for cost: Int) -> Bool {
@@ -101,20 +96,18 @@ final class AppState: ObservableObject {
     
     func completeOnboarding() {
         hasCompletedOnboarding = true
-        if isProSubscriber {
-            ensureInitialCreditsIfNeeded()
+    }
+    
+    // MARK: - Subscription Flow
+    
+    func handleSubscriptionVerification(transactionId: String, apiClient: APIClient) async {
+        do {
+            try await apiClient.verifySubscription(transactionId: transactionId)
+            isProSubscriber = true
+            await refreshCreditBalance(apiClient: apiClient)
+        } catch {
+            print("Subscription verification failed: \(error.localizedDescription)")
         }
-    }
-    
-    // MARK: - Mock Pro Purchase
-    
-    func purchasePro() {
-        isProSubscriber = true
-        creditBalance.weekly = 500
-    }
-    
-    func addPurchasedCredits(_ amount: Int) {
-        creditBalance.purchased += amount
     }
     
     // MARK: - Reset (for testing)

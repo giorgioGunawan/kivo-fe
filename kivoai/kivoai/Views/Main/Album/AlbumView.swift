@@ -131,15 +131,30 @@ struct AlbumItemView: View {
             }
             
         case .queued:
-            placeholderIcon("clock")
+            VStack(spacing: 8) {
+                placeholderIcon("clock")
+                Text("Queued...")
+                    .font(AppTheme.Typography.caption2)
+                    .foregroundStyle(AppTheme.Colors.textTertiary)
+            }
             
         case .running:
-            ProgressView()
-                .tint(AppTheme.Colors.accent)
+            VStack(spacing: 8) {
+                ProgressView()
+                    .tint(AppTheme.Colors.accent)
+                Text("Magician at work...")
+                    .font(AppTheme.Typography.caption2)
+                    .foregroundStyle(AppTheme.Colors.accent)
+            }
             
         case .failed:
-            placeholderIcon("exclamationmark.triangle")
-                .foregroundStyle(AppTheme.Colors.error)
+            VStack(spacing: 8) {
+                placeholderIcon("exclamationmark.triangle")
+                    .foregroundStyle(AppTheme.Colors.error)
+                Text("Failed")
+                    .font(AppTheme.Typography.caption2)
+                    .foregroundStyle(AppTheme.Colors.error)
+            }
             
         case .idle:
             placeholderIcon("photo")

@@ -76,19 +76,52 @@ struct GeneratedImageDetailView: View {
                 .aspectRatio(1, contentMode: .fit)
                 .shadow(color: AppTheme.Shadow.soft, radius: 10, x: 0, y: 4)
             
-            if case .completed(let localURL) = job.status,
-               let data = try? Data(contentsOf: localURL),
-               let image = UIImage(data: data) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous))
-            } else {
+            switch job.status {
+            case .completed(let localURL):
+                if let data = try? Data(contentsOf: localURL),
+                   let image = UIImage(data: data) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous))
+                } else {
+                    statusPlaceholder(icon: "photo", text: "Image not found")
+                }
+            case .queued:
+                statusPlaceholder(icon: "clock", text: "In queue...")
+            case .running:
                 VStack(spacing: AppTheme.Spacing.md) {
                     ProgressView()
-                    Text("Loading generation...")
+                        .tint(AppTheme.Colors.accent)
+                    Text("Magician at work...")
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(AppTheme.Colors.accent)
+                }
+            case .failed(let message):
+                statusPlaceholder(icon: "exclamationmark.triangle", text: "Generation failed", subtext: message)
+            case .idle:
+                statusPlaceholder(icon: "photo", text: "Waiting...")
+            }
+        }
+    }
+    
+    private func statusPlaceholder(icon: String, text: String, subtext: String? = nil) -> some View {
+        VStack(spacing: AppTheme.Spacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 40, weight: .light))
+                .foregroundStyle(AppTheme.Colors.textTertiary)
+            
+            VStack(spacing: 4) {
+                Text(text)
+                    .font(AppTheme.Typography.headline)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                
+                if let subtext = subtext {
+                    Text(subtext)
                         .font(AppTheme.Typography.caption)
                         .foregroundStyle(AppTheme.Colors.textTertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
             }
         }

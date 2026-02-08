@@ -54,6 +54,17 @@ class AuthManager: NSObject, ObservableObject {
         }
     }
     
+    func completeSignInWithApple(authorization: ASAuthorization) async throws {
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let identityTokenData = appleIDCredential.identityToken,
+              let identityToken = String(data: identityTokenData, encoding: .utf8) else {
+            throw AuthError.invalidCredential
+        }
+        
+        let userIdentifier = appleIDCredential.user
+        await handleSuccessfulSignIn(identityToken: identityToken, userIdentifier: userIdentifier)
+    }
+    
     private var signInContinuation: CheckedContinuation<Void, Error>?
     
     func signOut() {

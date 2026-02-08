@@ -9,9 +9,11 @@ import SwiftUI
 
 struct PaywallView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedPlan: Plan = .pro
+    @State private var isPurchasing: Bool = false
     
     enum Plan: String, CaseIterable {
         case pro
@@ -53,7 +55,11 @@ struct PaywallView: View {
                     planSelectionSection
                     
                     // CTA
-                    purchaseButton
+                    if isPurchasing {
+                        ProgressView().tint(AppTheme.Colors.accent).padding()
+                    } else {
+                        purchaseButton
+                    }
                     
                     // Legal
                     legalText
@@ -81,12 +87,13 @@ struct PaywallView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(isPurchasing)
                 }
             }
         }
     }
     
-    // MARK: - Header
+    // MARK: - Sections
     
     private var headerSection: some View {
         VStack(spacing: AppTheme.Spacing.md) {
@@ -112,8 +119,6 @@ struct PaywallView: View {
         }
     }
     
-    // MARK: - Benefits
-    
     private var benefitsSection: some View {
         VStack(spacing: AppTheme.Spacing.md) {
             BenefitRow(icon: "bolt.fill", title: "500 Weekly Credits", description: "Refresh every week")
@@ -125,8 +130,6 @@ struct PaywallView: View {
         .background(AppTheme.Colors.background)
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous))
     }
-    
-    // MARK: - Plans
     
     private var planSelectionSection: some View {
         VStack(spacing: AppTheme.Spacing.sm) {
@@ -142,8 +145,6 @@ struct PaywallView: View {
             }
         }
     }
-    
-    // MARK: - Purchase
     
     private var purchaseButton: some View {
         Button(action: {
@@ -171,13 +172,21 @@ struct PaywallView: View {
     }
     
     private func handlePurchase() {
-        switch selectedPlan {
-        case .pro:
-            appState.purchasePro()
-        case .credits:
-            appState.addPurchasedCredits(100)
+        isPurchasing = true
+        Task {
+            // In a real app, this follows an actual App Store purchase.
+            // Here we send a mock transactionId to trigger the backend verification.
+            let mockId = "mock_tx_\(UUID().uuidString)"
+            await appState.handleSubscriptionVerification(
+                transactionId: mockId,
+                apiClient: appEnvironment.apiClient
+            )
+            
+            await MainActor.run {
+                isPurchasing = false
+                dismiss()
+            }
         }
-        dismiss()
     }
 }
 
@@ -287,4 +296,5 @@ struct PlanCard: View {
 #Preview {
     PaywallView()
         .environmentObject(AppState())
+        .environmentObject(AppEnvironment())
 }

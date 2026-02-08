@@ -36,20 +36,20 @@ struct CreditDetailsSheet: View {
                     // Case 1-3: Pro Weekly first
                     creditRow(
                         title: "Pro Weekly",
-                        value: "\(appState.creditBalance.weekly)",
+                        value: "\(appState.creditBalance.weeklyRemaining)",
                         subtitle: "(resets in 7 days)"
                     )
                     
                     creditRow(
                         title: "Extra Credits",
-                        value: "\(appState.creditBalance.purchased)",
+                        value: "\(appState.creditBalance.purchasedRemaining)",
                         subtitle: "(never expire)"
                     )
                 } else {
                     // Case 4: Extra Credits first
                     creditRow(
                         title: "Extra Credits",
-                        value: "\(appState.creditBalance.purchased)",
+                        value: "\(appState.creditBalance.purchasedRemaining)",
                         subtitle: "(never expire)"
                     )
                     
@@ -128,7 +128,7 @@ struct CreditDetailsSheet: View {
     
     private var footerText: String {
         if appState.isProSubscriber {
-            if appState.creditBalance.weekly > 0 {
+            if appState.creditBalance.weeklyRemaining > 0 {
                 return "Weekly credits are used first."
             } else {
                 return "Using extra credits until weekly refresh."

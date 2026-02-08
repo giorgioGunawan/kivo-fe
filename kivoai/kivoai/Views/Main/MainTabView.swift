@@ -42,13 +42,23 @@ struct MainTabView: View {
         .sheet(isPresented: $showingSignIn) {
             SignInView {
                 showingSignIn = false
-                appState.showingCustomCreation = true
+                Task {
+                    await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
+                    appState.showingCustomCreation = true
+                }
             }
             .environmentObject(appEnvironment.authManager)
         }
         .sheet(isPresented: $appState.showingCustomCreation) {
             CustomCreationSheet()
                 .environmentObject(appState)
+        }
+        .onAppear {
+            if appEnvironment.authManager.isAuthenticated {
+                Task {
+                    await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
+                }
+            }
         }
     }
     

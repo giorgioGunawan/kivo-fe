@@ -281,11 +281,6 @@ struct CustomCreationSheet: View {
     // MARK: - Actions
     private func startGeneration() {
         guard canGenerate else { return }
-        guard appState.consumeCredits(cost: creditCost) else {
-            errorMessage = "Not enough credits."
-            showError = true
-            return
-        }
         
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         isGenerating = true
@@ -316,15 +311,27 @@ struct CustomCreationSheet: View {
             do {
                 let result = try await appEnvironment.imageService.generateImage(request)
                 appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
+                await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
+                
                 await MainActor.run {
                     isGenerating = false
                     dismiss()
                 }
             } catch {
-                appState.updateJobStatus(jobId: job.id, status: .failed(message: error.localizedDescription))
+                let message: String
+                if let apiError = error as? APIError, case .insufficientCredits = apiError {
+                    message = "Insufficient credits. Please upgrade to Pro."
+                    appState.showingPaywall = true
+                } else {
+                    message = error.localizedDescription
+                }
+                
+                appState.updateJobStatus(jobId: job.id, status: .failed(message: message))
+                await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
+                
                 await MainActor.run {
                     isGenerating = false
-                    errorMessage = error.localizedDescription
+                    errorMessage = message
                     showError = true
                 }
             }
@@ -333,7 +340,10 @@ struct CustomCreationSheet: View {
     
     private func saveInputImage(_ image: UIImage) -> URL? {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("input_\(UUID().uuidString).jpg")
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        guard let resizedImage = image.resized(to: 1024),
+              let data = resizedImage.jpegData(compressionQuality: 0.8) else {
+            return nil
+        }
         try? data.write(to: url)
         return url
     }
