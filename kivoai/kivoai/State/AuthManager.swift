@@ -25,13 +25,13 @@ class AuthManager: NSObject, ObservableObject {
         self.isAuthenticated = getAccessToken() != nil
     }
     
-    func getAccessToken() -> String? {
-        guard let data = keychain.read(service: serviceName, account: tokenAccount) else { return nil }
+    nonisolated func getAccessToken() -> String? {
+        guard let data = KeychainHelper.shared.read(service: "com.kivo.auth", account: "accessToken") else { return nil }
         return String(data: data, encoding: .utf8)
     }
     
-    func getUserIdentifier() -> String? {
-        guard let data = keychain.read(service: serviceName, account: userAccount) else { return nil }
+    nonisolated func getUserIdentifier() -> String? {
+        guard let data = KeychainHelper.shared.read(service: "com.kivo.auth", account: "userIdentifier") else { return nil }
         return String(data: data, encoding: .utf8)
     }
     

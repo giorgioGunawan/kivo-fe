@@ -39,6 +39,7 @@ struct GeneratedImageDetailView: View {
         .navigationBarHidden(true)
         .background(AppTheme.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
+        .enableSwipeBack()
         .onAppear {
             appState.tabBarHidden = true
         }
@@ -51,6 +52,8 @@ struct GeneratedImageDetailView: View {
     
     private var backButton: some View {
         Button {
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
             dismiss()
         } label: {
             Image(systemName: "chevron.left")
@@ -71,18 +74,24 @@ struct GeneratedImageDetailView: View {
     
     private var imageSection: some View {
         ZStack {
+            
             RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous)
                 .fill(AppTheme.Colors.secondaryBackground)
-                .aspectRatio(1, contentMode: .fit)
                 .shadow(color: AppTheme.Shadow.soft, radius: 10, x: 0, y: 4)
             
+            // Allow image to define size, but provide min height for placeholders
+            if !job.status.isInProgress && job.outputImageURL == nil {
+                 Color.clear.frame(height: 300) // Placeholder height
+            }
+            
             switch job.status {
-            case .completed(let localURL):
-                if let data = try? Data(contentsOf: localURL),
+            case .completed(let path):
+                let url = FileUtils.getURL(for: path)
+                if let data = try? Data(contentsOf: url),
                    let image = UIImage(data: data) {
                     Image(uiImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .scaledToFit() // Changed from aspectRatio(contentMode: .fill) and removed container constraint
                         .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous))
                 } else {
                     statusPlaceholder(icon: "photo", text: "Image not found")
@@ -189,7 +198,7 @@ struct GeneratedImageDetailView: View {
     // MARK: - Action Methods
     
     private func saveImage() {
-        if case .completed(let url) = job.status,
+        if let url = job.outputImageURL,
            let data = try? Data(contentsOf: url),
            let image = UIImage(data: data) {
             UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
@@ -197,7 +206,7 @@ struct GeneratedImageDetailView: View {
     }
     
     private func shareImage() {
-        if case .completed(let url) = job.status {
+        if let url = job.outputImageURL {
             let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let rootVC = windowScene.windows.first?.rootViewController {

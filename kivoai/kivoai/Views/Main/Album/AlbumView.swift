@@ -22,6 +22,16 @@ struct AlbumView: View {
                     emptyState
                 } else {
                     ScrollView {
+                        // Warning about persistence
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text("Only the last 20 creations are saved locally.")
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                        }
+                        .padding(.top, AppTheme.Spacing.md)
+                        
                         LazyVGrid(columns: columns, spacing: AppTheme.Spacing.md) {
                             ForEach(appState.generationJobs.reversed()) { job in
                                 NavigationLink(destination: GeneratedImageDetailView(job: job)) {
@@ -120,8 +130,9 @@ struct AlbumItemView: View {
     @ViewBuilder
     private var imageContent: some View {
         switch job.status {
-        case .completed(let localURL):
-            if let data = try? Data(contentsOf: localURL),
+        case .completed(let path):
+            let url = FileUtils.getURL(for: path)
+            if let data = try? Data(contentsOf: url),
                let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
                     .resizable()

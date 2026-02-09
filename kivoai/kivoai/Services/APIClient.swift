@@ -27,7 +27,8 @@ class APIClient {
         request.httpBody = body
         
         // Attach Authorization header
-        if let token = await authManager.getAccessToken() {
+        // Attach Authorization header
+        if let token = authManager.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -65,7 +66,7 @@ class APIClient {
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.setValue(UUID().uuidString, forHTTPHeaderField: "Idempotency-Key")
         
-        if let token = await authManager.getAccessToken() {
+        if let token = authManager.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         

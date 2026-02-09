@@ -313,7 +313,9 @@ struct CustomCreationSheet: View {
             
             do {
                 let result = try await appEnvironment.imageService.generateImage(request)
-                appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
+                // Convert full URL to relative path for persistence
+                let relativePath = "Creations/" + result.localImageURL.lastPathComponent
+                appState.updateJobStatus(jobId: job.id, status: .completed(relativePath: relativePath))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
             } catch {
                 let message: String

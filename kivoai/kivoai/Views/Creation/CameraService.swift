@@ -54,11 +54,13 @@ class CameraService: NSObject, ObservableObject {
             }
             
             self.session.beginConfiguration()
+            // Ensure commitConfiguration is always called at end of block
+            defer { self.session.commitConfiguration() }
+            
             self.session.sessionPreset = .photo
             
             do {
                 guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: self.currentPosition) else {
-                    self.session.commitConfiguration()
                     return
                 }
                 
@@ -71,12 +73,14 @@ class CameraService: NSObject, ObservableObject {
                     self.session.addOutput(self.photoOutput)
                 }
                 
-                self.session.commitConfiguration()
                 self.isConfigured = true
+                
+                // Start session after configuration is committed
+                // Since this enqueues to the same serial queue, it will run after this block returns (and defer executes)
                 self.startSession()
                 
             } catch {
-                self.session.commitConfiguration()
+                print("Error configuring camera: \(error)")
             }
         }
     }
@@ -107,6 +111,7 @@ class CameraService: NSObject, ObservableObject {
             guard let self = self else { return }
             
             self.session.beginConfiguration()
+            defer { self.session.commitConfiguration() }
             
             if let currentInput = self.session.inputs.first as? AVCaptureDeviceInput {
                 self.session.removeInput(currentInput)
@@ -116,7 +121,6 @@ class CameraService: NSObject, ObservableObject {
             
             do {
                 guard let newDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: self.currentPosition) else {
-                    self.session.commitConfiguration()
                     return
                 }
                 
@@ -124,10 +128,8 @@ class CameraService: NSObject, ObservableObject {
                 if self.session.canAddInput(newInput) {
                     self.session.addInput(newInput)
                 }
-                
-                self.session.commitConfiguration()
             } catch {
-                self.session.commitConfiguration()
+                print("Error switching camera: \(error)")
             }
         }
     }

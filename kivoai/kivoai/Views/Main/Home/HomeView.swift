@@ -44,11 +44,15 @@ struct HomeView: View {
                             impact.impactOccurred()
                             showingSettings = true
                         } label: {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(AppTheme.Colors.textTertiary)
-                                .frame(width: 32, height: 32)
-                                .background(Circle().fill(Color(uiColor: .systemGray6)))
+                            ZStack {
+                                Circle()
+                                    .fill(Color(uiColor: .systemGray6))
+                                    .frame(width: 32, height: 32)
+                                
+                                Image(systemName: "gearshape.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(AppTheme.Colors.textTertiary)
+                            }
                         }
                         .buttonStyle(.plain)
                     }
@@ -183,12 +187,16 @@ struct CreationStatusCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack {
-                if case .completed(let localURL) = job.status,
-                   let data = try? Data(contentsOf: localURL),
-                   let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
+                if case .completed(let path) = job.status {
+                   let url = FileUtils.getURL(for: path)
+                   if let data = try? Data(contentsOf: url),
+                      let uiImage = UIImage(data: data) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Color(uiColor: .systemGray6)
+                    }
                 } else if let inputURL = job.inputImageURL,
                           let data = try? Data(contentsOf: inputURL),
                           let uiImage = UIImage(data: data) {

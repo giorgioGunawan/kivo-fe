@@ -108,8 +108,8 @@ final class AppState: ObservableObject {
     func addJob(_ job: GenerationJob) {
         generationJobs.insert(job, at: 0)
         
-        // Keep only last 30
-        if generationJobs.count > 30 {
+        // Keep only last 20 (User Request)
+        if generationJobs.count > 20 {
             // Remove the oldest job's files if it exists
             let oldestJob = generationJobs.last
             cleanupJobFiles(oldestJob)
@@ -138,8 +138,8 @@ final class AppState: ObservableObject {
         }
         
         // Delete output image if completed
-        if case .completed(let localURL) = job.status {
-            try? FileManager.default.removeItem(at: localURL)
+        if let outputURL = job.outputImageURL {
+            try? FileManager.default.removeItem(at: outputURL)
         }
     }
     

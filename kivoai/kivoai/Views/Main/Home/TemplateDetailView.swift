@@ -58,6 +58,7 @@ struct TemplateDetailView: View {
             backButton
         }
         .navigationBarHidden(true)
+        .enableSwipeBack()
         .safeAreaInset(edge: .bottom) {
             bottomBar
         }
@@ -96,6 +97,7 @@ struct TemplateDetailView: View {
     
     private var backButton: some View {
         Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             dismiss()
         } label: {
             Image(systemName: "chevron.left")
@@ -142,11 +144,6 @@ struct TemplateDetailView: View {
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
             HStack {
-                Text("Your Photo")
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                
-                Spacer()
                 
                 if selectedImage != nil {
                     Button("Remove") {
@@ -333,7 +330,9 @@ struct TemplateDetailView: View {
             
             do {
                 let result = try await appEnvironment.imageService.generateImage(request)
-                appState.updateJobStatus(jobId: job.id, status: .completed(localURL: result.localImageURL))
+                // Convert full URL to relative path for persistence
+                let relativePath = "Creations/" + result.localImageURL.lastPathComponent
+                appState.updateJobStatus(jobId: job.id, status: .completed(relativePath: relativePath))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
             } catch {
                 let message: String

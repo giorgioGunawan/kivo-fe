@@ -6,6 +6,7 @@
 import Foundation
 import Combine
 
+@MainActor
 final class AppEnvironment: ObservableObject {
     let imageService: ImageGenerationService
     let authManager: AuthManager
