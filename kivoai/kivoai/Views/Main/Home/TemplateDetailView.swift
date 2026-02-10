@@ -65,7 +65,7 @@ struct TemplateDetailView: View {
         .background(AppTheme.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingCamera) {
-            CameraServiceView(image: $selectedImage)
+            CameraServiceView(image: $selectedImage, creditCost: template.creditCost)
         }
         .onChange(of: selectedPhotoItem) { _, newItem in
             Task {
@@ -120,19 +120,6 @@ struct TemplateDetailView: View {
     
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-            // Category pill
-            HStack(spacing: AppTheme.Spacing.xxs) {
-                Image(systemName: template.category.iconName)
-                    .font(.system(size: 10, weight: .bold))
-                Text(template.category.title.uppercased())
-                    .font(.system(size: 10, weight: .black))
-            }
-            .foregroundStyle(AppTheme.Colors.accent)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(AppTheme.Colors.accent.opacity(0.1))
-            .clipShape(Capsule())
-            
             Text(template.title)
                 .font(.system(size: 32, weight: .black))
                 .foregroundStyle(AppTheme.Colors.textPrimary)
@@ -140,62 +127,44 @@ struct TemplateDetailView: View {
     }
     
     // MARK: - Photo Section
-    
+
     private var photoSection: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-            HStack {
-                
-                if selectedImage != nil {
-                    Button("Remove") {
+        Group {
+            if let image = selectedImage {
+                ZStack(alignment: .topTrailing) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 260)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+
+                    Button {
                         selectedImage = nil
                         selectedPhotoItem = nil
-                    }
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(AppTheme.Colors.error)
-                    .buttonStyle(.plain)
-                }
-            }
-            
-            if let image = selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 240)
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-            } else {
-                HStack(spacing: 12) {
-                    Button {
-                        showingCamera = true
                     } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 26))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .shadow(radius: 4)
+                    }
+                    .padding(10)
+                }
+            } else {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(AppTheme.Colors.secondaryBackground)
+                    .frame(height: 180)
+                    .overlay {
                         VStack(spacing: 8) {
                             Image(systemName: "camera.fill")
-                                .font(.system(size: 24))
-                            Text("Take Photo")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.system(size: 28))
+                                .foregroundStyle(AppTheme.Colors.textQuaternary)
+                            Text(template.photographHint)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(AppTheme.Colors.textTertiary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 24)
                         }
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 120)
-                        .background(AppTheme.Colors.secondaryBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
-                    .buttonStyle(.plain)
-                    
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        VStack(spacing: 8) {
-                            Image(systemName: "photo.fill")
-                                .font(.system(size: 24))
-                            Text("Upload")
-                                .font(.system(size: 13, weight: .bold))
-                        }
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 120)
-                        .background(AppTheme.Colors.secondaryBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                    }
-                    .buttonStyle(.plain)
-                }
             }
         }
     }
@@ -238,53 +207,87 @@ struct TemplateDetailView: View {
     }
     
     // MARK: - Bottom Bar
-    
+
     private var bottomBar: some View {
         VStack(spacing: AppTheme.Spacing.sm) {
-            // Credit info
-            HStack {
-                Text("🪙")
-                    .font(.system(size: 14))
-                
-                Text("\(template.creditCost) credits")
-                    .font(AppTheme.Typography.subheadline.weight(.medium))
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                
-                Spacer()
-                
-                if !appState.hasEnoughCredits(for: template.creditCost) {
-                    Text("Not enough credits")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.Colors.error)
-                }
-            }
-            
-            // Generate button
-            Button(action: {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
-                startGeneration()
-            }) {
-                HStack(spacing: AppTheme.Spacing.xs) {
-                    if isGenerating {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Image(systemName: "wand.and.stars")
-                    }
-                    
-                    Text(isGenerating ? "Generating..." : "Generate")
+            if template.requiresPhoto && selectedImage == nil {
+                // No photo yet — primary CTAs to add one
+                Button {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    showingCamera = true
+                } label: {
+                    Label("Take Photo", systemImage: "camera.fill")
                         .font(AppTheme.Typography.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(LinearGradient.accentGradient)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
                 }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(canGenerate ? LinearGradient.accentGradient : LinearGradient(colors: [Color.gray.opacity(0.5)], startPoint: .leading, endPoint: .trailing))
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    Label("Upload from Library", systemImage: "photo.fill")
+                        .font(AppTheme.Typography.headline)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(AppTheme.Colors.secondaryBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            } else {
+                // Photo ready (or not required) — show credit info + generate
+                HStack {
+                    HStack(spacing: 4) {
+                        Text("🪙")
+                            .font(.system(size: 14))
+                        Text("\(template.creditCost) credits")
+                            .font(AppTheme.Typography.subheadline.weight(.medium))
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+                    }
+
+                    Spacer()
+
+                    if !appState.hasEnoughCredits(for: template.creditCost) {
+                        Button {
+                            appState.showingPaywall = true
+                        } label: {
+                            Text("Get credits →")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(AppTheme.Colors.accent)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    startGeneration()
+                }) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
+                        if isGenerating {
+                            ProgressView().tint(.white)
+                        } else {
+                            Image(systemName: "wand.and.stars")
+                        }
+                        Text(isGenerating ? "Generating..." : "Generate")
+                            .font(AppTheme.Typography.headline)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(canGenerate ? LinearGradient.accentGradient : LinearGradient(colors: [Color.gray.opacity(0.4)], startPoint: .leading, endPoint: .trailing))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                    .contentShape(Rectangle())
+                }
+                .disabled(!canGenerate)
+                .buttonStyle(.plain)
             }
-            .disabled(!canGenerate)
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, AppTheme.Spacing.lg)
         .padding(.top, AppTheme.Spacing.md)

@@ -10,17 +10,17 @@ import SwiftUI
 struct CreditBadge: View {
     let cost: Int
     var isCompact: Bool = false
-    
+
     var body: some View {
         HStack(spacing: AppTheme.Spacing.xxs) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: isCompact ? 10 : 12, weight: .semibold))
-            
+            Text("🪙")
+                .font(.system(size: isCompact ? 10 : 12))
+
             Text("\(cost)")
                 .font(isCompact ? AppTheme.Typography.caption2 : AppTheme.Typography.footnote)
                 .fontWeight(.semibold)
+                .foregroundStyle(AppTheme.Colors.credits)
         }
-        .foregroundStyle(AppTheme.Colors.credits)
         .padding(.horizontal, isCompact ? AppTheme.Spacing.xs : AppTheme.Spacing.sm)
         .padding(.vertical, isCompact ? 4 : AppTheme.Spacing.xxs)
         .background(AppTheme.Colors.credits.opacity(0.12))
@@ -30,29 +30,28 @@ struct CreditBadge: View {
 
 struct CreditBalanceView: View {
     let balance: CreditBalance
-    
+
     var body: some View {
         HStack(spacing: AppTheme.Spacing.xs) {
-            // Weekly
+            // Subscription
             HStack(spacing: AppTheme.Spacing.xxs) {
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.credits)
-                
+                Text("🪙")
+                    .font(.system(size: 12))
+
                 Text("Weekly: \(balance.weeklyRemaining)")
                     .font(AppTheme.Typography.footnote.weight(.semibold))
                     .foregroundStyle(AppTheme.Colors.textPrimary)
             }
-            
+
             Text("·")
                 .foregroundStyle(AppTheme.Colors.textTertiary)
-            
+
             // Purchased
             HStack(spacing: AppTheme.Spacing.xxs) {
-                Image(systemName: "bag.fill")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                
+                Text("🪙")
+                    .font(.system(size: 11))
+                    .opacity(0.6)
+
                 Text("Purchased: \(balance.purchasedRemaining)")
                     .font(AppTheme.Typography.footnote)
                     .foregroundStyle(AppTheme.Colors.textSecondary)

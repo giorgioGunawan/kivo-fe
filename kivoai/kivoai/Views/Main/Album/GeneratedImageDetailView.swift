@@ -18,7 +18,7 @@ struct GeneratedImageDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     // Space for floating back button
-                    Color.clear.frame(height: 60)
+                    Color.clear.frame(height: safeAreaTopPadding + 64)
                     
                     // Image
                     mainImageSection
@@ -33,11 +33,13 @@ struct GeneratedImageDetailView: View {
                         // Title & Prompt Section
                         // Combined as requested: "Instead of 'Prompt'... put the title"
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(job.isCustom ? "Custom Generation" : job.templateTitle)
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(AppTheme.Colors.textPrimary)
-                            
-                            Text(job.prompt)
+                            if !job.isCustom {
+                                Text(job.templateTitle)
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                            }
+
+                            Text("Prompt: \(job.prompt)")
                                 .font(.body)
                                 .foregroundStyle(AppTheme.Colors.textSecondary)
                                 .lineSpacing(4)
@@ -142,10 +144,6 @@ struct GeneratedImageDetailView: View {
     
     private var mainImageSection: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(AppTheme.Colors.secondaryBackground)
-                .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-            
             switch job.status {
             case .completed(let path):
                  let url = FileUtils.getURL(for: path)

@@ -101,7 +101,8 @@ final class AppState: ObservableObject {
     }
     
     func hasEnoughCredits(for cost: Int) -> Bool {
-        creditBalance.total >= cost
+        guard !debugZeroCredits else { return false }
+        return creditBalance.total >= cost
     }
     
     // MARK: - Job Methods

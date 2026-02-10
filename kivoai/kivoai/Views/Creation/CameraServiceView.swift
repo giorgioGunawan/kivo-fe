@@ -8,6 +8,7 @@ import AVFoundation
 
 struct CameraServiceView: View {
     @Binding var image: UIImage?
+    var creditCost: Int? = nil
     @Environment(\.dismiss) private var dismiss
     @StateObject private var cameraService = CameraService()
     @State private var isFlashOn = false
@@ -15,7 +16,7 @@ struct CameraServiceView: View {
     var body: some View {
         ZStack {
             AppTheme.Colors.background.ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Header
                 HStack {
@@ -23,26 +24,38 @@ struct CameraServiceView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(AppTheme.Colors.textPrimary)
-                            .frame(width: 44, height: 44)
+                            .frame(width: 40, height: 40)
                             .background(Circle().fill(AppTheme.Colors.secondaryBackground))
                     }
                     .buttonStyle(.plain)
-                    
+
                     Spacer()
+
+                    if let cost = creditCost {
+                        HStack(spacing: 6) {
+                            Text("🪙")
+                                .font(.system(size: 14))
+                            Text("\(cost) credits")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(AppTheme.Colors.textPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .frame(height: 40)
+                        .background(Capsule().fill(AppTheme.Colors.secondaryBackground))
+                    }
                 }
-                .padding(.leading, 32)
-                .padding(.trailing, 24)
-                .padding(.top, 20)
-                
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+
                 Spacer()
-                
+
                 // Camera Preview
                 ZStack {
                     if cameraService.isPermissionGranted {
                         CameraPreview(session: cameraService.session)
-                            .aspectRatio(3/4, contentMode: .fill)
+                            .aspectRatio(3/4, contentMode: .fit)
                             .clipShape(RoundedRectangle(cornerRadius: 32))
                             .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
                     } else {
@@ -61,50 +74,36 @@ struct CameraServiceView: View {
                             }
                     }
                 }
-                .padding(.horizontal, 40)
-                
+                .padding(.horizontal, 20)
+
                 Spacer()
-                
-                // Controls - Standardized with CustomCreationSheet
-                HStack(spacing: 0) {
+
+                // Controls
+                HStack(spacing: 36) {
                     // Placeholder for balance
                     Circle()
                         .fill(Color.clear)
                         .frame(width: 52, height: 52)
-                    
-                    Spacer()
-                    
-                    // Capture Button - Modern Premium Style
+
+                    // Capture Button - iOS-native shutter style
                     Button {
                         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                         cameraService.capturePhoto()
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 0.55, green: 0.25, blue: 0.9),
-                                            Color(red: 0.4, green: 0.1, blue: 0.7)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .stroke(Color(uiColor: .systemGray3), lineWidth: 4)
                                 .frame(width: 80, height: 80)
-                                .shadow(color: Color.purple.opacity(0.35), radius: 12, x: 0, y: 6)
-                            
                             Circle()
-                                .stroke(.white, lineWidth: 3)
+                                .fill(Color(white: 0.55))
                                 .frame(width: 66, height: 66)
                         }
                     }
                     .buttonStyle(.plain)
-                    
-                    Spacer()
-                    
-                    // Switch Camera Button - Moved here from top
+
+                    // Switch Camera Button
                     Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         cameraService.switchCamera()
                     } label: {
                         Image(systemName: "arrow.triangle.2.circlepath.camera")
@@ -116,7 +115,6 @@ struct CameraServiceView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 40)
                 .padding(.bottom, 60)
             }
         }

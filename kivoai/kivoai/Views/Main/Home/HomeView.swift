@@ -40,8 +40,8 @@ struct HomeView: View {
                         showingSettings = true
                     } label: {
                         Image(systemName: "gearshape.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(AppTheme.Colors.textPrimary)
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(AppTheme.Colors.textTertiary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -86,39 +86,35 @@ struct HomeView: View {
     
     @ViewBuilder
     private var unifiedCreditPill: some View {
-        if appState.creditBalance.total > 0 {
+        if appState.creditBalance.total > 0 && !appState.debugZeroCredits {
             // State A: User has credits
-            HStack(spacing: 5) {
-                Text("🪙")
-                    .font(.system(size: 12))
-                
-                Text("\(appState.creditBalance.total)")
-                    .font(.system(size: 13, weight: .black))
-            }
-            .foregroundColor(AppTheme.Colors.textPrimary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-            .onTapGesture {
-                let impact = UIImpactFeedbackGenerator(style: .light)
-                impact.impactOccurred()
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 appState.showingCreditsSheet = true
+            } label: {
+                HStack(spacing: 5) {
+                    Text("🪙")
+                        .font(.system(size: 12))
+                    Text("\(appState.creditBalance.total)")
+                        .font(.system(size: 13, weight: .black))
+                }
+                .foregroundColor(AppTheme.Colors.textPrimary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
             }
+            .buttonStyle(.plain)
         } else {
             // State B: User has ZERO credits
-            Text("GET PRO")
-                .font(.system(size: 11, weight: .black))
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(AppTheme.Colors.accent)
-                )
-                .onTapGesture {
-                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                    impact.impactOccurred()
-                    appState.showingPaywall = true
-                }
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                appState.showingPaywall = true
+            } label: {
+                Text("GET PRO")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundColor(AppTheme.Colors.accent)
+                    .padding(.horizontal, 6)
+            }
+            .buttonStyle(.plain)
         }
     }
     
@@ -157,7 +153,8 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, AppTheme.Spacing.lg)
-                .padding(.vertical, AppTheme.Spacing.md)
+                .padding(.top, AppTheme.Spacing.md)
+                .padding(.bottom, 4)
             }
         }
     }
@@ -169,7 +166,7 @@ struct CreationStatusCard: View {
     let job: GenerationJob
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        ZStack(alignment: .topTrailing) {
             ZStack {
                 if case .completed(let path) = job.status {
                    let url = FileUtils.getURL(for: path)
@@ -208,28 +205,36 @@ struct CreationStatusCard: View {
             .frame(width: 140, height: 140)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .shimmering(active: job.status.isInProgress)
-            
-            Text(job.templateTitle)
-                .font(.system(size: 14, weight: .semibold))
-                .lineLimit(1)
-            
-            Text(statusText)
-                .font(.system(size: 11))
-                .foregroundStyle(statusColor)
+
+            statusPill
+                .padding(.top, 8)
+                .padding(.trailing, 8)
         }
-        .frame(width: 140)
+        .frame(width: 140, height: 140)
     }
-    
+
+    private var statusPill: some View {
+        Text(statusText)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(statusColor.opacity(0.85))
+            )
+    }
+
     private var statusText: String {
         switch job.status {
-        case .queued: return "Queued..."
-        case .running: return "Generating..."
+        case .queued: return "Queued"
+        case .running: return "Generating"
         case .completed: return "Ready"
         case .failed: return "Failed"
         case .idle: return "Idle"
         }
     }
-    
+
     private var statusColor: Color {
         switch job.status {
         case .queued, .running: return .orange

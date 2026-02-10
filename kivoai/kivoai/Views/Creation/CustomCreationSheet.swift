@@ -45,8 +45,13 @@ struct CustomCreationSheet: View {
         .onAppear {
             cameraService.onPhotoCaptured = { img in
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                self.selectedImage = img
-                self.cameraService.stopSession()
+                Task.detached(priority: .userInitiated) {
+                    let resized = img.resized(to: 1024) ?? img
+                    await MainActor.run {
+                        self.selectedImage = resized
+                        self.cameraService.stopSession()
+                    }
+                }
             }
             #if !targetEnvironment(simulator)
             cameraService.checkPermissions()
@@ -60,8 +65,11 @@ struct CustomCreationSheet: View {
             Task {
                 if let data = try? await newItem.loadTransferable(type: Data.self),
                    let img = UIImage(data: data) {
+                    let resized = await Task.detached(priority: .userInitiated) {
+                        img.resized(to: 1024) ?? img
+                    }.value
                     await MainActor.run {
-                        selectedImage = img
+                        selectedImage = resized
                         cameraService.stopSession()
                     }
                 }
@@ -79,11 +87,9 @@ struct CustomCreationSheet: View {
             
             if let img = selectedImage {
                 ZStack(alignment: .topTrailing) {
-                    Image(uiImage: img)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
-                    
+                    CapturedImageView(image: img)
+                        .equatable()
+
                     Button {
                         selectedImage = nil
                         selectedPhotoItem = nil
@@ -113,8 +119,10 @@ struct CustomCreationSheet: View {
     private var cameraContent: some View {
         VStack(spacing: 0) {
             headerBar
-            
-            // Camera preview - slightly more square aspect ratio
+
+            Spacer()
+
+            // Camera preview
             Group {
                 if cameraService.isPermissionGranted {
                     CameraPreview(session: cameraService.session)
@@ -137,13 +145,10 @@ struct CustomCreationSheet: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, 16)
-            
+
             Spacer()
-            
-            // More spacing before capture buttons
+
             captureBar
-                .padding(.top, 24)
                 .padding(.bottom, 32)
         }
     }
@@ -163,16 +168,15 @@ struct CustomCreationSheet: View {
             
             Spacer()
             
-            HStack(spacing: 5) {
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(AppTheme.Colors.credits)
-                Text("\(creditCost)")
-                    .font(.system(size: 12, weight: .bold))
+            HStack(spacing: 6) {
+                Text("🪙")
+                    .font(.system(size: 14))
+                Text("\(creditCost) credits")
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(AppTheme.Colors.textPrimary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
+            .frame(height: 40)
             .background(Capsule().fill(AppTheme.Colors.secondaryBackground))
         }
         .padding(.horizontal, 20)
@@ -196,9 +200,9 @@ struct CustomCreationSheet: View {
             }
             .frame(minHeight: 48)
             .contentShape(Rectangle())
-            .onTapGesture {
+            .simultaneousGesture(TapGesture().onEnded {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            }
+            })
             
             // Send button - same height as text field
             Button(action: startGeneration) {
@@ -223,7 +227,7 @@ struct CustomCreationSheet: View {
     }
     
     private var captureBar: some View {
-        HStack {
+        HStack(spacing: 36) {
             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                 Image(systemName: "photo.on.rectangle")
                     .font(.system(size: 22))
@@ -233,39 +237,29 @@ struct CustomCreationSheet: View {
                     .clipShape(Circle())
                     .contentShape(Rectangle())
             }
-            
-            Spacer()
-            
-            // Capture button with darker purple gradient
+            .simultaneousGesture(TapGesture().onEnded {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            })
+
+            // Capture button - iOS-native shutter style
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 cameraService.capturePhoto()
             } label: {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.5, green: 0.2, blue: 0.8),
-                                Color(red: 0.35, green: 0.1, blue: 0.6)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 72, height: 72)
-                    .overlay(
-                        Circle()
-                            .stroke(.white, lineWidth: 3)
-                            .padding(4)
-                    )
-                    .shadow(color: Color.purple.opacity(0.4), radius: 10, y: 5)
-                    .contentShape(Circle())
+                ZStack {
+                    Circle()
+                        .stroke(Color(uiColor: .systemGray3), lineWidth: 4)
+                        .frame(width: 72, height: 72)
+                    Circle()
+                        .fill(Color(white: 0.55))
+                        .frame(width: 60, height: 60)
+                }
+                .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            
-            Spacer()
-            
+
             Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 cameraService.switchCamera()
             } label: {
                 Image(systemName: "arrow.triangle.2.circlepath.camera")
@@ -278,7 +272,6 @@ struct CustomCreationSheet: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 44)
     }
     
     // MARK: - Actions
@@ -332,22 +325,42 @@ struct CustomCreationSheet: View {
         }
     }
     
+    // MARK: - Helpers
+
     private func saveInputImage(_ image: UIImage) -> URL? {
         let fileManager = FileManager.default
         let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let creationsURL = documentsURL.appendingPathComponent("Creations", isDirectory: true)
-        
+
         if !fileManager.fileExists(atPath: creationsURL.path) {
             try? fileManager.createDirectory(at: creationsURL, withIntermediateDirectories: true)
         }
-        
+
         let fileURL = creationsURL.appendingPathComponent("input_\(UUID().uuidString).jpg")
-        
+
         guard let resizedImage = image.resized(to: 1024),
               let data = resizedImage.jpegData(compressionQuality: 0.8) else {
             return nil
         }
         try? data.write(to: fileURL)
         return fileURL
+    }
+}
+
+// MARK: - Captured Image View
+// Isolated into its own Equatable struct so SwiftUI can skip re-rendering
+// the image on every keystroke in the prompt TextField.
+private struct CapturedImageView: View, Equatable {
+    let image: UIImage
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.image === rhs.image
+    }
+
+    var body: some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFit()
+            .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 }

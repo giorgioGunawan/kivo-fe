@@ -12,8 +12,12 @@ struct PaywallView: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
     
-    @State private var selectedPlan: Plan = .pro
+    @State private var selectedPlan: Plan
     @State private var isPurchasing: Bool = false
+
+    init(initialPlan: Plan = .pro) {
+        _selectedPlan = State(initialValue: initialPlan)
+    }
     
     enum Plan: String, CaseIterable {
         case pro
@@ -121,7 +125,7 @@ struct PaywallView: View {
     
     private var benefitsSection: some View {
         VStack(spacing: AppTheme.Spacing.md) {
-            BenefitRow(icon: "bolt.fill", title: "500 Weekly Credits", description: "Refresh every week")
+            BenefitRow(icon: "🪙", title: "500 Weekly Credits", description: "Refresh every week", isEmoji: true)
             BenefitRow(icon: "square.grid.2x2.fill", title: "All Templates", description: "Access every template")
             BenefitRow(icon: "wand.and.stars", title: "Priority Generation", description: "Skip the queue")
             BenefitRow(icon: "video.fill", title: "Video Coming Soon", description: "Be first to try")
@@ -196,17 +200,23 @@ struct BenefitRow: View {
     let icon: String
     let title: String
     let description: String
-    
+    var isEmoji: Bool = false
+
     var body: some View {
         HStack(spacing: AppTheme.Spacing.md) {
             ZStack {
                 Circle()
                     .fill(AppTheme.Colors.accent.opacity(0.1))
                     .frame(width: 40, height: 40)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.accent)
+
+                if isEmoji {
+                    Text(icon)
+                        .font(.system(size: 20))
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                }
             }
             
             VStack(alignment: .leading, spacing: 2) {
