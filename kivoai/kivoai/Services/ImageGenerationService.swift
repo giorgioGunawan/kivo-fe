@@ -56,9 +56,10 @@ class KivoImageGenerationService: ImageGenerationService {
         // Step 2: Create generation job
         let createJobBody: [String: Any] = [
             "media_type": "image",
-            "model": "grok-imagine/image-to-image",
-            "prompt": request.prompt,
-            "input_image_url": remoteImageUrl ?? ""
+            "model": "google/nano-banana-edit",
+            "prompt": String(request.prompt.prefix(5000)),
+            "input_image_url": remoteImageUrl ?? "",
+            "output_format": "png"
         ]
         
         let jsonData = try JSONSerialization.data(withJSONObject: createJobBody)
