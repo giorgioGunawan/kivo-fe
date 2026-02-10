@@ -22,14 +22,13 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             // Content
-            Group {
-                if selectedTab == .home {
-                    HomeView()
-                } else {
-                    AlbumView()
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            HomeView()
+                .opacity(selectedTab == .home ? 1 : 0)
+                .id(Tab.home)
+            
+            AlbumView()
+                .opacity(selectedTab == .library ? 1 : 0)
+                .id(Tab.library)
             
             // Tab Bar Area
             tabBar
@@ -141,7 +140,7 @@ struct TabButton: View {
     
     var body: some View {
         Button {
-            let haptic = UIImpactFeedbackGenerator(style: .light)
+            let haptic = UIImpactFeedbackGenerator(style: .medium)
             haptic.impactOccurred()
             action()
         } label: {
@@ -152,9 +151,11 @@ struct TabButton: View {
                 Text(label)
                     .font(.system(size: 10, weight: isSelected ? .bold : .medium))
             }
-            .foregroundStyle(isSelected ? .black : Color.black.opacity(0.5))
-            .frame(width: 64, height: 48)
+            .foregroundStyle(isSelected ? .black : Color.black.opacity(0.4))
+            .frame(width: 70, height: 48)
             .contentShape(Rectangle())
+            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
         .buttonStyle(.plain)
     }

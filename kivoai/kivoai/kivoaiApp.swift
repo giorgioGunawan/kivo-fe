@@ -20,9 +20,16 @@ struct kivoaiApp: App {
                 .preferredColorScheme(.light)
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active && appEnvironment.authManager.isAuthenticated {
-                Task {
-                    await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
+            if newPhase == .active {
+                appState.checkAndResumeJobs(
+                    apiClient: appEnvironment.apiClient,
+                    imageService: appEnvironment.imageService
+                )
+                
+                if appEnvironment.authManager.isAuthenticated {
+                    Task {
+                        await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
+                    }
                 }
             }
         }

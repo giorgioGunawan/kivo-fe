@@ -58,19 +58,53 @@ struct GeneratedImageDetailView: View {
             
             // Floating Back Button (Restored to previous style)
             backButton
+            
+            // Saved Feedback Notice
+            if showingSaveFeedback {
+                savedFeedbackBadge
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
         .navigationBarHidden(true)
         .background(AppTheme.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
-        .ignoresSafeArea(.container, edges: .top) // Allow image/content to go under status bar if needed, but we have a back button. 
-        // Actually, let's respect safe area for the back button so it doesn't overlap dynamic island.
+        .ignoresSafeArea(.container, edges: .top)
         .enableSwipeBack()
+        .alert("Delete Creation?", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                performDelete()
+            }
+        } message: {
+            Text("This will permanently remove this image from your library.")
+        }
         .onAppear {
             appState.tabBarHidden = true
         }
         .onDisappear {
             appState.tabBarHidden = false
         }
+    }
+    
+    @State private var showingSaveFeedback = false
+    @State private var showingDeleteConfirmation = false
+    
+    private var savedFeedbackBadge: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+            Text("Saved to Photos")
+                .font(.subheadline.weight(.medium))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
+        .frame(maxWidth: .infinity)
+        .padding(.top, safeAreaTopPadding + 8)
     }
     
     // MARK: - Back Button
@@ -166,33 +200,81 @@ struct GeneratedImageDetailView: View {
     private var actionRow: some View {
         HStack(spacing: 12) {
             // Save
-            Button(action: saveImage) {
-                Label("Save", systemImage: "square.and.arrow.down")
-                    .frame(maxWidth: .infinity)
+            ActionButton(
+                label: "Save",
+                icon: "square.and.arrow.down",
+                color: AppTheme.Colors.textPrimary
+            ) {
+                saveImage()
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
-            .foregroundStyle(.primary)
             
             // Share
-            Button(action: shareImage) {
-                Label("Share", systemImage: "square.and.arrow.up")
-                    .frame(maxWidth: .infinity)
+            ActionButton(
+                label: "Share",
+                icon: "square.and.arrow.up",
+                color: AppTheme.Colors.textPrimary
+            ) {
+                shareImage()
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
-            .foregroundStyle(.primary)
             
             // Delete
-            Button(action: deleteImage) {
-                Image(systemName: "trash")
-                    .frame(width: 44)
+            ActionButton(
+                label: nil,
+                icon: "trash",
+                color: .red
+            ) {
+                showingDeleteConfirmation = true
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
-            .tint(.red) // Native red tint for destructive
+            .frame(width: 54)
         }
     }
+}
+
+// MARK: - Action Button
+
+struct ActionButton: View {
+    let label: String?
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                
+                if let label = label {
+                    Text(label)
+                        .font(.system(size: 15, weight: .semibold))
+                }
+            }
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity)
+            .frame(height: 48)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(AppTheme.Colors.secondaryBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.black.opacity(0.05), lineWidth: 1)
+            )
+        }
+        .buttonStyle(ActionButtonStyle())
+    }
+}
+
+struct ActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+extension GeneratedImageDetailView {
     
     // MARK: - Handlers
     
@@ -201,12 +283,27 @@ struct GeneratedImageDetailView: View {
            let data = try? Data(contentsOf: url),
            let image = UIImage(data: data) {
             UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+            
+            withAnimation(.spring()) {
+                showingSaveFeedback = true
+            }
+            
             let generator = UINotificationFeedbackGenerator()
             generator.notificationOccurred(.success)
+            
+            // Hide feedback after 2 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation {
+                    showingSaveFeedback = false
+                }
+            }
         }
     }
     
     private func shareImage() {
+        let impact = UIImpactFeedbackGenerator(style: .light)
+        impact.impactOccurred()
+        
         if let url = job.outputImageURL {
             let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -217,6 +314,10 @@ struct GeneratedImageDetailView: View {
     }
     
     private func deleteImage() {
+        showingDeleteConfirmation = true
+    }
+    
+    private func performDelete() {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.warning)
         appState.deleteJob(job)

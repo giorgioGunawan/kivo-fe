@@ -144,6 +144,35 @@ final class AppState: ObservableObject {
         }
     }
     
+    func checkAndResumeJobs(apiClient: APIClient, imageService: ImageGenerationService) {
+        for job in generationJobs {
+            if job.status.isInProgress {
+                Task {
+                    await resumeJob(job, apiClient: apiClient, imageService: imageService)
+                }
+            }
+        }
+    }
+    
+    private func resumeJob(_ job: GenerationJob, apiClient: APIClient, imageService: ImageGenerationService) async {
+        let request = GenerateImageRequest(
+            prompt: job.prompt,
+            templateId: job.templateId,
+            inputImageURL: job.inputImageURL,
+            estimatedCreditCost: job.creditCost
+        )
+        
+        do {
+            let result = try await imageService.generateImage(request)
+            let relativePath = "Creations/" + result.localImageURL.lastPathComponent
+            updateJobStatus(jobId: job.id, status: .completed(relativePath: relativePath))
+            await refreshCreditBalance(apiClient: apiClient)
+        } catch {
+            updateJobStatus(jobId: job.id, status: .failed(message: error.localizedDescription))
+            await refreshCreditBalance(apiClient: apiClient)
+        }
+    }
+    
     func hasJobInProgress() -> Bool {
         generationJobs.contains { $0.status.isInProgress }
     }

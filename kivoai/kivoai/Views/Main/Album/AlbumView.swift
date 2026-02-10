@@ -17,23 +17,14 @@ struct AlbumView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if appState.generationJobs.isEmpty {
-                    emptyState
-                } else {
-                    ScrollView {
-                        // Warning about persistence
-                        HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                            Text("Only the last 20 creations are saved locally.")
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
-                        }
-                        .padding(.top, AppTheme.Spacing.md)
-                        
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if appState.generationJobs.isEmpty {
+                        emptyState
+                            .padding(.top, 100)
+                    } else {
                         LazyVGrid(columns: columns, spacing: AppTheme.Spacing.md) {
-                            ForEach(appState.generationJobs.reversed()) { job in
+                            ForEach(appState.generationJobs) { job in
                                 NavigationLink(destination: GeneratedImageDetailView(job: job)) {
                                     AlbumItemView(job: job)
                                 }
@@ -41,14 +32,42 @@ struct AlbumView: View {
                             }
                         }
                         .padding(.horizontal, AppTheme.Spacing.lg)
-                        .padding(.vertical, AppTheme.Spacing.md)
+                        .padding(.top, AppTheme.Spacing.md)
                         .padding(.bottom, 120)
                     }
                 }
             }
             .background(AppTheme.Colors.background)
             .navigationTitle("Library")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if !appState.generationJobs.isEmpty {
+                        persistenceWarning
+                    }
+                }
+            }
         }
+    }
+    
+    private var persistenceWarning: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(.orange)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Only the last 20 stored.")
+                Text("Save to Photos.")
+            }
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(AppTheme.Colors.textSecondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(AppTheme.Colors.secondaryBackground)
+        )
     }
     
     // MARK: - Empty State
@@ -100,31 +119,34 @@ struct AlbumItemView: View {
     let job: GenerationJob
     
     var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-            // Image
-            ZStack {
-                RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
-                    .fill(AppTheme.Colors.secondaryBackground)
-                    .aspectRatio(1, contentMode: .fit)
-                
-                imageContent
-            }
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+        VStack(alignment: .leading, spacing: 10) {
+            // Strictly square image container
+            // We use Color.clear with aspectRatio(1) to define the square shape based on column width
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay(
+                    GeometryReader { geo in
+                        imageContent
+                            .frame(width: geo.size.width, height: geo.size.height)
+                            .clipped()
+                    }
+                )
+                .background(AppTheme.Colors.secondaryBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             
             // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(job.isCustom ? "Custom" : job.templateTitle)
-                    .font(AppTheme.Typography.footnote.weight(.semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(AppTheme.Colors.textPrimary)
                     .lineLimit(1)
                 
                 Text(job.createdAt.formatted(date: .abbreviated, time: .omitted))
-                    .font(AppTheme.Typography.caption2)
-                    .foregroundStyle(AppTheme.Colors.textTertiary)
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
             }
+            .padding(.horizontal, 2)
         }
-        .padding(AppTheme.Spacing.xs)
-        .cardStyle()
     }
     
     @ViewBuilder
