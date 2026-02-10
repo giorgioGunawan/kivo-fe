@@ -34,28 +34,16 @@ struct HomeView: View {
             .background(AppTheme.Colors.background)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(alignment: .center, spacing: 12) {
-                        Text("Home")
-                            .font(.system(size: 28, weight: .black))
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
-                        
-                        Button {
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
-                            showingSettings = true
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color(uiColor: .systemGray6))
-                                    .frame(width: 32, height: 32)
-                                
-                                Image(systemName: "gearshape.fill")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(AppTheme.Colors.textTertiary)
-                            }
-                        }
-                        .buttonStyle(.plain)
+                    Button {
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                     }
+                    .buttonStyle(.plain)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -108,12 +96,8 @@ struct HomeView: View {
                     .font(.system(size: 13, weight: .black))
             }
             .foregroundColor(AppTheme.Colors.textPrimary)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 8)
             .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(Color(uiColor: .systemGray6))
-            )
             .onTapGesture {
                 let impact = UIImpactFeedbackGenerator(style: .light)
                 impact.impactOccurred()
@@ -153,7 +137,7 @@ struct HomeView: View {
     
     private var creationsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Your Creations")
+            Text("Recent Creations")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(AppTheme.Colors.textPrimary)
                 .padding(.horizontal, AppTheme.Spacing.lg)

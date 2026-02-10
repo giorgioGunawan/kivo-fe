@@ -15,30 +15,55 @@ struct GeneratedImageDetailView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ScrollView {
-                VStack(spacing: AppTheme.Spacing.lg) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    // Space for floating back button
+                    Color.clear.frame(height: 60)
+                    
                     // Image
-                    imageSection
+                    mainImageSection
+                        .padding(.horizontal, 16) // "Less horizontal padding"
                     
-                    // Info
-                    infoSection
+                    VStack(alignment: .leading, spacing: 20) {
+                        
+                        // Action Row
+                        // Placed high up for accessibility, classic iOS styling
+                        actionRow
+                        
+                        // Title & Prompt Section
+                        // Combined as requested: "Instead of 'Prompt'... put the title"
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(job.isCustom ? "Custom Generation" : job.templateTitle)
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(AppTheme.Colors.textPrimary)
+                            
+                            Text(job.prompt)
+                                .font(.body)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                                .lineSpacing(4)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(AppTheme.Colors.secondaryBackground.opacity(0.5))
+                        )
+                    }
+                    .padding(.horizontal, 16)
                     
-                    // Actions
-                    actionButtons
-                    
-                    Spacer()
-                        .frame(height: AppTheme.Spacing.xl)
+                    Spacer(minLength: 100)
                 }
-                .padding(.horizontal, AppTheme.Spacing.lg)
-                .padding(.top, 60) // Space for floating back button
             }
             
-            // Floating Back Button
+            // Floating Back Button (Restored to previous style)
             backButton
         }
         .navigationBarHidden(true)
         .background(AppTheme.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
+        .ignoresSafeArea(.container, edges: .top) // Allow image/content to go under status bar if needed, but we have a back button. 
+        // Actually, let's respect safe area for the back button so it doesn't overlap dynamic island.
         .enableSwipeBack()
         .onAppear {
             appState.tabBarHidden = true
@@ -50,6 +75,7 @@ struct GeneratedImageDetailView: View {
     
     // MARK: - Back Button
     
+    // Restored exactly as it was "before" (per user request)
     private var backButton: some View {
         Button {
             let impact = UIImpactFeedbackGenerator(style: .light)
@@ -66,142 +92,117 @@ struct GeneratedImageDetailView: View {
                         .shadow(color: AppTheme.Shadow.soft, radius: 8, x: 0, y: 2)
                 )
         }
-        .padding(.leading, AppTheme.Spacing.md)
-        .padding(.top, 10)
+        .padding(.leading, 16)
+        .padding(.top, safeAreaTopPadding + 10) // Dynamic safe area handling
+    }
+    
+    private var safeAreaTopPadding: CGFloat {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            return window.safeAreaInsets.top
+        }
+        return 47 // Default generic top safe area
     }
     
     // MARK: - Image
     
-    private var imageSection: some View {
+    private var mainImageSection: some View {
         ZStack {
-            
-            RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(AppTheme.Colors.secondaryBackground)
-                .shadow(color: AppTheme.Shadow.soft, radius: 10, x: 0, y: 4)
-            
-            // Allow image to define size, but provide min height for placeholders
-            if !job.status.isInProgress && job.outputImageURL == nil {
-                 Color.clear.frame(height: 300) // Placeholder height
-            }
+                .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
             
             switch job.status {
             case .completed(let path):
-                let url = FileUtils.getURL(for: path)
-                if let data = try? Data(contentsOf: url),
+                 let url = FileUtils.getURL(for: path)
+                 if let data = try? Data(contentsOf: url),
                    let image = UIImage(data: data) {
                     Image(uiImage: image)
                         .resizable()
-                        .scaledToFit() // Changed from aspectRatio(contentMode: .fill) and removed container constraint
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.xl, style: .continuous))
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 } else {
                     statusPlaceholder(icon: "photo", text: "Image not found")
                 }
             case .queued:
                 statusPlaceholder(icon: "clock", text: "In queue...")
             case .running:
-                VStack(spacing: AppTheme.Spacing.md) {
+                VStack(spacing: 12) {
                     ProgressView()
-                        .tint(AppTheme.Colors.accent)
-                    Text("Magician at work...")
-                        .font(AppTheme.Typography.headline)
-                        .foregroundStyle(AppTheme.Colors.accent)
+                    Text("Generating...")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
                 }
             case .failed(let message):
-                statusPlaceholder(icon: "exclamationmark.triangle", text: "Generation failed", subtext: message)
+                statusPlaceholder(icon: "exclamationmark.triangle", text: "Failed", subtext: message)
             case .idle:
                 statusPlaceholder(icon: "photo", text: "Waiting...")
             }
         }
+        .aspectRatio(1.0, contentMode: .fit) // Square placeholder, adjusts for image
     }
     
     private func statusPlaceholder(icon: String, text: String, subtext: String? = nil) -> some View {
-        VStack(spacing: AppTheme.Spacing.md) {
+        VStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 40, weight: .light))
-                .foregroundStyle(AppTheme.Colors.textTertiary)
-            
-            VStack(spacing: 4) {
-                Text(text)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                
-                if let subtext = subtext {
-                    Text(subtext)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                .font(.system(size: 32))
+                .foregroundStyle(.secondary)
+            Text(text)
+                .font(.headline)
+                .foregroundStyle(.primary)
+            if let subtext = subtext {
+                Text(subtext)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
         }
-    }
-    
-    // MARK: - Info
-    
-    private var infoSection: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-            HStack {
-                Text(job.isCustom ? "Custom" : job.templateTitle)
-                    .font(AppTheme.Typography.title2)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                
-                Spacer()
-                
-                Text(job.createdAt, style: .date)
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.Colors.textTertiary)
-            }
-            
-            if !job.prompt.isEmpty {
-                Text(job.prompt)
-                    .font(AppTheme.Typography.body)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                    .padding(AppTheme.Spacing.md)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(AppTheme.Colors.secondaryBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
-            }
-        }
+        .frame(minHeight: 300)
     }
     
     // MARK: - Actions
     
-    private var actionButtons: some View {
-        VStack(spacing: AppTheme.Spacing.md) {
+    private var actionRow: some View {
+        HStack(spacing: 12) {
+            // Save
             Button(action: saveImage) {
-                Label("Save to Photos", systemImage: "square.and.arrow.down")
-                    .primaryButtonStyle()
+                Label("Save", systemImage: "square.and.arrow.down")
+                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .foregroundStyle(.primary)
             
-            HStack(spacing: AppTheme.Spacing.md) {
-                Button(action: shareImage) {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                        .secondaryButtonStyle()
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: deleteImage) {
-                    Label("Delete", systemImage: "trash")
-                        .font(AppTheme.Typography.headline)
-                        .foregroundStyle(AppTheme.Colors.error)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(AppTheme.Colors.error.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
-                }
-                .buttonStyle(.plain)
+            // Share
+            Button(action: shareImage) {
+                Label("Share", systemImage: "square.and.arrow.up")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .foregroundStyle(.primary)
+            
+            // Delete
+            Button(action: deleteImage) {
+                Image(systemName: "trash")
+                    .frame(width: 44)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .tint(.red) // Native red tint for destructive
         }
     }
     
-    // MARK: - Action Methods
+    // MARK: - Handlers
     
     private func saveImage() {
         if let url = job.outputImageURL,
            let data = try? Data(contentsOf: url),
            let image = UIImage(data: data) {
             UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
         }
     }
     
@@ -216,7 +217,8 @@ struct GeneratedImageDetailView: View {
     }
     
     private func deleteImage() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.warning)
         appState.deleteJob(job)
         dismiss()
     }

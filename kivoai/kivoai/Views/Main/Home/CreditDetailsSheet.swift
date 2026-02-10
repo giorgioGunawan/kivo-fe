@@ -46,17 +46,17 @@ struct CreditDetailsSheet: View {
                         subtitle: "(never expire)"
                     )
                 } else {
-                    // Case 4: Extra Credits first
-                    creditRow(
-                        title: "Extra Credits",
-                        value: "\(appState.creditBalance.purchasedRemaining)",
-                        subtitle: "(never expire)"
-                    )
-                    
+                    // Case 4: Weekly first
                     creditRow(
                         title: "Pro Weekly",
                         value: "Inactive",
                         subtitle: nil
+                    )
+                    
+                    creditRow(
+                        title: "Extra Credits",
+                        value: "\(appState.creditBalance.purchasedRemaining)",
+                        subtitle: "(never expire)"
                     )
                 }
             }
@@ -87,6 +87,7 @@ struct CreditDetailsSheet: View {
                                 .font(AppTheme.Typography.caption)
                                 .opacity(0.8)
                         }
+                        .padding(.horizontal, 8)
                         .primaryButtonStyle()
                         .contentShape(Rectangle())
                     }

@@ -41,6 +41,7 @@ final class AppState: ObservableObject {
     @Published var showingCustomCreation: Bool = false
     @Published var activeJobId: UUID? = nil
     @Published var tabBarHidden: Bool = false
+    @Published var debugZeroCredits: Bool = false
     
     // MARK: - Keys
     

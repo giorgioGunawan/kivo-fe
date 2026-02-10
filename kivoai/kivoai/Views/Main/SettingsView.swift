@@ -14,6 +14,8 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section("Debug") {
+                    Toggle("Simulate Zero Credits", isOn: $appState.debugZeroCredits)
+                    
                     Button(role: .destructive) {
                         dismiss()
                         // Small delay to ensure sheet dismisses before state change triggers view swap
