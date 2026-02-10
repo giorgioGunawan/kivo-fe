@@ -19,9 +19,22 @@ struct AlbumView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center) {
+                        Text("Library")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+                        Spacer()
+                        if !appState.generationJobs.isEmpty {
+                            persistenceWarning
+                        }
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.lg)
+                    .padding(.top, AppTheme.Spacing.md)
+                    .padding(.bottom, AppTheme.Spacing.md)
+
                     if appState.generationJobs.isEmpty {
                         emptyState
-                            .padding(.top, 100)
+                            .padding(.top, 60)
                     } else {
                         LazyVGrid(columns: columns, spacing: AppTheme.Spacing.md) {
                             ForEach(appState.generationJobs) { job in
@@ -38,27 +51,15 @@ struct AlbumView: View {
                 }
             }
             .background(AppTheme.Colors.background)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Library")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if !appState.generationJobs.isEmpty {
-                        persistenceWarning
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
     
     private var persistenceWarning: some View {
         HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            Image(systemName: "info.circle.fill")
                 .font(.system(size: 14))
-                .foregroundStyle(.orange)
+                .foregroundStyle(AppTheme.Colors.textSecondary)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("Only the last 20 creations stored.")
@@ -139,18 +140,10 @@ struct AlbumItemView: View {
                 .background(AppTheme.Colors.secondaryBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             
-            // Info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(job.isCustom ? "Custom" : job.templateTitle)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                    .lineLimit(1)
-                
-                Text(job.createdAt.formatted(date: .abbreviated, time: .omitted))
-                    .font(.system(size: 11))
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-            }
-            .padding(.horizontal, 2)
+            Text(job.createdAt.formatted(date: .abbreviated, time: .omitted))
+                .font(.system(size: 11))
+                .foregroundStyle(AppTheme.Colors.textSecondary)
+                .padding(.horizontal, 2)
         }
     }
     
