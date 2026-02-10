@@ -38,9 +38,13 @@ struct AlbumView: View {
                 }
             }
             .background(AppTheme.Colors.background)
-            .navigationTitle("Library")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Library")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if !appState.generationJobs.isEmpty {
                         persistenceWarning
@@ -53,14 +57,14 @@ struct AlbumView: View {
     private var persistenceWarning: some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 12))
+                .font(.system(size: 14))
                 .foregroundStyle(.orange)
-            
+
             VStack(alignment: .leading, spacing: 0) {
                 Text("Only the last 20 stored.")
                 Text("Save to Photos.")
             }
-            .font(.system(size: 9, weight: .bold))
+            .font(.system(size: 12, weight: .bold))
             .foregroundStyle(AppTheme.Colors.textSecondary)
         }
         .padding(.horizontal, 10)
