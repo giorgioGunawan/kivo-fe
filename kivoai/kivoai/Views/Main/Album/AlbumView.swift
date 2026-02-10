@@ -39,6 +39,7 @@ struct AlbumView: View {
             }
             .background(AppTheme.Colors.background)
             .navigationTitle("Library")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !appState.generationJobs.isEmpty {
