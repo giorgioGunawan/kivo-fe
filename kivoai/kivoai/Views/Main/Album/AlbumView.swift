@@ -61,10 +61,10 @@ struct AlbumView: View {
                 .foregroundStyle(.orange)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("Only the last 20 stored.")
-                Text("Save to Photos.")
+                Text("Only the last 20 creations stored.")
+                Text("Save to Photos to avoid losing them.")
             }
-            .font(.system(size: 12, weight: .bold))
+            .font(.system(size: 10, weight: .bold))
             .foregroundStyle(AppTheme.Colors.textSecondary)
         }
         .padding(.horizontal, 10)
