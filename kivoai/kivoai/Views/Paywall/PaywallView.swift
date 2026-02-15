@@ -66,6 +66,7 @@ struct PaywallView: View {
                     planSelectionSection
                     actionSection
                     legalText
+                    restoreButton
                     Spacer().frame(height: AppTheme.Spacing.xl)
                 }
                 .padding(.horizontal, AppTheme.Spacing.lg)
@@ -194,6 +195,22 @@ struct PaywallView: View {
             .multilineTextAlignment(.center)
     }
 
+    private var restoreButton: some View {
+        Button(action: {
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
+            handleRestore()
+        }) {
+            Text("Restore Purchases")
+                .font(AppTheme.Typography.subheadline.weight(.semibold))
+                .foregroundStyle(AppTheme.Colors.textSecondary)
+                .underline()
+        }
+        .buttonStyle(.plain)
+        .padding(.top, AppTheme.Spacing.md)
+        .disabled(isPurchasing)
+    }
+
     // MARK: - Helpers
 
     private func displayPrice(for plan: Plan) -> String {
@@ -227,6 +244,28 @@ struct PaywallView: View {
                 }
             } catch StoreKitManager.StoreError.userCancelled {
                 await MainActor.run { isPurchasing = false }
+            } catch {
+                await MainActor.run {
+                    isPurchasing = false
+                    purchaseError = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    private func handleRestore() {
+        isPurchasing = true
+        Task {
+            do {
+                let transactionId = try await appEnvironment.storeKitManager.restorePurchases()
+                await appState.handleSubscriptionVerification(
+                    transactionId: transactionId,
+                    apiClient: appEnvironment.apiClient
+                )
+                await MainActor.run {
+                    isPurchasing = false
+                    dismiss()
+                }
             } catch {
                 await MainActor.run {
                     isPurchasing = false

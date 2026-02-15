@@ -97,7 +97,11 @@ class APIClient {
     }
     
     func verifySubscription(transactionId: String) async throws {
-        let body = ["originalTransactionId": transactionId]
+        var body = ["originalTransactionId": transactionId]
+        #if DEBUG
+        body["environment"] = "Sandbox"
+        #endif
+        
         let jsonData = try JSONSerialization.data(withJSONObject: body)
         let _: EmptyResponse = try await performRequest(endpoint: "auth/subscription/verify", method: "POST", body: jsonData)
     }

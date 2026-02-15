@@ -73,6 +73,21 @@ final class StoreKitManager: ObservableObject {
         }
     }
 
+    // MARK: - Restore
+
+    func restorePurchases() async throws -> String {
+        try await AppStore.sync()
+        
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let transaction) = result {
+                if ProductID.all.contains(transaction.productID) {
+                    return String(transaction.originalID)
+                }
+            }
+        }
+        throw StoreError.noPurchasesToRestore
+    }
+
     // MARK: - Transaction Listener
 
     private func listenForTransactions() -> Task<Void, Never> {
@@ -91,6 +106,7 @@ final class StoreKitManager: ObservableObject {
         case failedVerification
         case userCancelled
         case pending
+        case noPurchasesToRestore
         case unknown
 
         var errorDescription: String? {
@@ -98,6 +114,7 @@ final class StoreKitManager: ObservableObject {
             case .failedVerification: return "Transaction verification failed."
             case .userCancelled: return nil
             case .pending: return "Your purchase is pending approval."
+            case .noPurchasesToRestore: return "No active subscription found to restore."
             case .unknown: return "An unknown error occurred."
             }
         }
