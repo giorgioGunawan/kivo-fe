@@ -14,6 +14,7 @@ struct OnboardingView: View {
     @State private var selectedInterests: Set<TemplateCategory> = []
     @State private var rating: Int = 0
     @State private var showingPaywall = false
+    @State private var showingDiscountOffer = false
 
     var body: some View {
         ZStack {
@@ -67,8 +68,13 @@ struct OnboardingView: View {
                 .padding(.bottom, 48)
             }
         }
-        .sheet(isPresented: $showingPaywall, onDismiss: completeOnboarding) {
+        .sheet(isPresented: $showingPaywall, onDismiss: handleFirstPaywallDismiss) {
             PaywallView()
+                .environmentObject(appState)
+                .environmentObject(appEnvironment)
+        }
+        .sheet(isPresented: $showingDiscountOffer, onDismiss: completeOnboarding) {
+            PaywallView(isOneTimeOffer: true)
                 .environmentObject(appState)
                 .environmentObject(appEnvironment)
         }
@@ -113,6 +119,17 @@ struct OnboardingView: View {
                 #warning("Using deprecated API for iOS < 18")
                 #endif
                 SKStoreReviewController.requestReview(in: scene)
+            }
+        }
+    }
+
+    private func handleFirstPaywallDismiss() {
+        if appState.isProSubscriber {
+            completeOnboarding()
+        } else {
+            // Slight delay to allow previous sheet to fully dismiss
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showingDiscountOffer = true
             }
         }
     }

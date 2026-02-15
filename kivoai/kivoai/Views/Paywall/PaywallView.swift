@@ -11,6 +11,8 @@ struct PaywallView: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
 
+    var isOneTimeOffer: Bool = false
+
     @State private var selectedPlan: Plan = .weekly
     @State private var isPurchasing: Bool = false
     @State private var purchaseError: String? = nil
@@ -26,7 +28,7 @@ struct PaywallView: View {
             switch self {
             case .weekly: return "Weekly"
             case .monthly: return "Monthly"
-            case .discounted: return "One-Time Offer"
+            case .discounted: return "Weekly (20% Off)"
             }
         }
 
@@ -42,16 +44,24 @@ struct PaywallView: View {
             switch self {
             case .weekly: return "500 credits · renews weekly"
             case .monthly: return "500 credits · renews monthly"
-            case .discounted: return "500 credits · limited time price"
+            case .discounted: return "500 credits · forever discounted"
             }
         }
 
         var badge: String? {
             switch self {
             case .monthly: return "Best Value"
-            case .discounted: return "Special Offer"
+            case .discounted: return "One-Time Offer"
             default: return nil
             }
+        }
+    }
+    
+    private var visiblePlans: [Plan] {
+        if isOneTimeOffer {
+            return [.discounted]
+        } else {
+            return [.weekly, .monthly]
         }
     }
 
@@ -97,6 +107,13 @@ struct PaywallView: View {
             }, message: {
                 Text(purchaseError ?? "")
             })
+            .onAppear {
+                if isOneTimeOffer {
+                    selectedPlan = .discounted
+                } else {
+                    selectedPlan = .weekly
+                }
+            }
         }
     }
 
@@ -106,22 +123,32 @@ struct PaywallView: View {
         VStack(spacing: AppTheme.Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(AppTheme.Colors.credits.opacity(0.15))
+                    .fill(isOneTimeOffer ? Color.red.opacity(0.15) : AppTheme.Colors.credits.opacity(0.15))
                     .frame(width: 80, height: 80)
 
-                Image(systemName: "star.fill")
+                Image(systemName: isOneTimeOffer ? "tag.fill" : "star.fill")
                     .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(AppTheme.Colors.credits)
+                    .foregroundStyle(isOneTimeOffer ? Color.red : AppTheme.Colors.credits)
             }
 
             VStack(spacing: AppTheme.Spacing.xs) {
-                Text("Unlock Kivo Pro")
-                    .font(AppTheme.Typography.title)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                if isOneTimeOffer {
+                    Text("Wait! One-Time Offer")
+                        .font(AppTheme.Typography.title)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                    
+                    Text("Get 20% off your subscription forever.")
+                        .font(AppTheme.Typography.body)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                } else {
+                    Text("Unlock Kivo Pro")
+                        .font(AppTheme.Typography.title)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
 
-                Text("Create unlimited AI masterpieces")
-                    .font(AppTheme.Typography.body)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                    Text("Create unlimited AI masterpieces")
+                        .font(AppTheme.Typography.body)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                }
             }
         }
     }
@@ -146,7 +173,7 @@ struct PaywallView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
             } else {
-                ForEach(Plan.allCases, id: \.self) { plan in
+                ForEach(visiblePlans, id: \.self) { plan in
                     PlanCard(
                         plan: plan,
                         displayPrice: displayPrice(for: plan),
