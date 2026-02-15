@@ -2,51 +2,36 @@
 //  GenerationStatusView.swift
 //  kivoai
 //
-//  Refined generation status screen with progress and tips.
-//
 
 import SwiftUI
 
 struct GenerationStatusView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
-    
+
     let jobId: UUID
-    
-    @State private var timeRemaining: Int = 30
-    @State private var tipIndex: Int = 0
-    @State private var showContinueButton: Bool = false
-    
-    private let tips = [
-        "Kivo works best with well-lit photos.",
-        "Try different templates for unique styles.",
-        "You can find all your creations in the Library.",
-        "Be specific with your custom prompts!",
-        "Quality takes time, usually about 30 seconds."
-    ]
-    
+
+    @State private var showDismissArea: Bool = false
+
     private var job: GenerationJob? {
         appState.generationJobs.first(where: { $0.id == jobId })
     }
-    
+
     var body: some View {
-        VStack(spacing: AppTheme.Spacing.xl) {
+        VStack(spacing: 0) {
             Spacer()
-            
-            // Header
-            VStack(spacing: AppTheme.Spacing.sm) {
-                Text("Generating Your Vision")
-                    .font(AppTheme.Typography.title)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                
-                Text(job?.templateTitle ?? "Custom Creation")
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(AppTheme.Colors.accent)
-            }
-            
-            // Thumbnail & Progress
+
+            // Logo
+            Text("Kivo AI")
+                .font(.system(size: 68, weight: .black, design: .rounded))
+                .foregroundStyle(LinearGradient.accentGradient)
+                .padding(.bottom, 48)
+
+            // Input image + spinner
             ZStack {
-                if let inputURL = job?.inputImageURL, let data = try? Data(contentsOf: inputURL), let uiImage = UIImage(data: data) {
+                if let inputURL = job?.inputImageURL,
+                   let data = try? Data(contentsOf: inputURL),
+                   let uiImage = UIImage(data: data) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()
@@ -61,62 +46,34 @@ struct GenerationStatusView: View {
                         .fill(AppTheme.Colors.secondaryBackground)
                         .frame(width: 200, height: 200)
                 }
-                
+
                 ProgressView()
                     .scaleEffect(1.5)
                     .tint(.white)
             }
             .shadow(color: AppTheme.Shadow.soft, radius: 20, x: 0, y: 10)
-            
-            // Status Info
-            VStack(spacing: AppTheme.Spacing.md) {
-                Text("Usually takes ~20–40 seconds")
-                    .font(AppTheme.Typography.subheadline)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                
-                if let prompt = job?.prompt {
-                    Text("\"\(prompt)\"")
-                        .font(AppTheme.Typography.body)
-                        .italic()
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
-                        .padding(.horizontal, AppTheme.Spacing.xl)
-                        .lineLimit(3)
-                }
-            }
-            
+
+            // Status copy
+            Text("Generating your image")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+                .padding(.top, 32)
+
             Spacer()
-            
-            // Tips
-            VStack(spacing: AppTheme.Spacing.sm) {
-                Text("PRO TIP")
-                    .font(AppTheme.Typography.caption.weight(.bold))
-                    .foregroundStyle(AppTheme.Colors.accent)
-                
-                Text(tips[tipIndex])
-                    .font(AppTheme.Typography.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                    .padding(.horizontal, AppTheme.Spacing.xl)
-                    .id(tipIndex)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
-            .frame(height: 80)
-            
-            Spacer()
-            
-            // Continue Button (Shows after 3 seconds)
-            if showContinueButton {
-                VStack(spacing: AppTheme.Spacing.md) {
-                    Text("You can leave this screen.\nWe'll notify you when it's ready.")
+
+            // Dismiss area — appears after a few seconds
+            if showDismissArea {
+                VStack(spacing: 14) {
+                    Text("It'll be waiting for you in the Library")
                         .font(AppTheme.Typography.footnote)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(AppTheme.Colors.textTertiary)
-                    
+
                     Button {
-                        dismiss()
+                        appState.activeJobId = nil
+                        appState.showingCustomCreation = false
                     } label: {
-                        Text("Continue Browsing")
+                        Text("Keep Exploring")
                             .font(AppTheme.Typography.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -124,42 +81,33 @@ struct GenerationStatusView: View {
                             .background(AppTheme.Colors.accent)
                             .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md))
                     }
+                    .buttonStyle(.plain)
                     .padding(.horizontal, AppTheme.Spacing.xl)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .padding(.bottom, AppTheme.Spacing.xl)
             } else {
                 Spacer().frame(height: 100)
             }
         }
-        .padding()
+        .padding(.horizontal, AppTheme.Spacing.lg)
         .background(AppTheme.Colors.background.ignoresSafeArea())
         .onAppear {
-            startTimer()
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                withAnimation(.spring()) {
+                    showDismissArea = true
+                }
+            }
         }
-        .onChange(of: job?.status) { oldStatus, newStatus in
+        .onChange(of: job?.status) { _, newStatus in
             if case .completed = newStatus {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                // Auto dismiss on success
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    dismiss()
+                    appState.activeJobId = nil
                 }
             } else if case .failed = newStatus {
                 UINotificationFeedbackGenerator().notificationOccurred(.error)
-            }
-        }
-    }
-    
-    private func startTimer() {
-        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            withAnimation {
-                tipIndex = (tipIndex + 1) % tips.count
-            }
-        }
-        
-        Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
-            withAnimation(.spring()) {
-                showContinueButton = true
             }
         }
     }

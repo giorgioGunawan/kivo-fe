@@ -188,7 +188,7 @@ struct CustomCreationSheet: View {
         HStack(alignment: .center, spacing: 10) {
             // Text input with overlay for instant tap
             ZStack {
-                TextField("Describe your vision...", text: $prompt, axis: .vertical)
+                TextField("Tell us what you want to add...", text: $prompt, axis: .vertical)
                     .font(.system(size: 15))
                     .lineLimit(1...4)
                     .padding(.horizontal, 18)

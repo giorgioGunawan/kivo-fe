@@ -6,7 +6,7 @@
 import UIKit
 
 extension UIImage {
-    func resized(to maxDimension: CGFloat) -> UIImage? {
+    nonisolated func resized(to maxDimension: CGFloat) -> UIImage? {
         let size = self.size
         
         if size.width <= maxDimension && size.height <= maxDimension {

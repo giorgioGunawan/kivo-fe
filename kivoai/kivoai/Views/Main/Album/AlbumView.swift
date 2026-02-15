@@ -62,7 +62,7 @@ struct AlbumView: View {
                 .foregroundStyle(AppTheme.Colors.textSecondary)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("Only the last 20 creations stored.")
+                Text("Only the last 20 creations are stored.")
                 Text("Save to Photos to avoid losing them.")
             }
             .font(.system(size: 10, weight: .bold))
@@ -95,7 +95,7 @@ struct AlbumView: View {
                     .font(AppTheme.Typography.title3)
                     .foregroundStyle(AppTheme.Colors.textPrimary)
                 
-                Text("Your AI-generated images will appear here")
+                Text("Your creation will appear here")
                     .font(AppTheme.Typography.subheadline)
                     .foregroundStyle(AppTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)

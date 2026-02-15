@@ -10,57 +10,80 @@ import PhotosUI
 
 struct TemplateDetailView: View {
     let template: Template
-    
+
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
-    @State private var customPrompt: String = ""
-    @State private var showAdvanced: Bool = false
+    @State private var customPrompt: String
     @State private var isGenerating: Bool = false
     @State private var errorMessage: String?
     @State private var showError: Bool = false
-    
+    @State private var startedJobId: UUID? = nil
+    @State private var generationWasCompleted = false
+    @FocusState private var promptFocused: Bool
+
+    init(template: Template) {
+        self.template = template
+        self._customPrompt = State(initialValue: template.basePrompt)
+    }
+
     private var canGenerate: Bool {
         let hasPhoto = !template.requiresPhoto || selectedImage != nil
         let hasCredits = appState.hasEnoughCredits(for: template.creditCost)
         let notBusy = !isGenerating
         return hasPhoto && hasCredits && notBusy
     }
-    
+
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
-                    // Header
-                    headerSection
-                        .padding(.top, 60)
-                    
-                    // Photo picker
-                    if template.requiresPhoto {
-                        photoSection
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
+                        // Header
+                        headerSection
+                            .padding(.top, 60)
+
+                        // Photo picker
+                        if template.requiresPhoto {
+                            photoSection
+                        }
+
+                        // Always-visible prompt editor
+                        promptSection
+                            .id("prompt")
+
+                        // Extra space when editing so there's room to scroll up fully
+                        Spacer()
+                            .frame(height: promptFocused ? 260 : AppTheme.Spacing.xl)
                     }
-                    
-                    // Advanced (collapsed by default)
-                    if template.showsAdvancedPrompt {
-                        advancedSection
-                    }
-                    
-                    Spacer()
-                        .frame(height: AppTheme.Spacing.xl)
+                    .padding(.horizontal, AppTheme.Spacing.lg)
                 }
-                .padding(.horizontal, AppTheme.Spacing.lg)
+                .onChange(of: promptFocused) { _, focused in
+                    if focused {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                proxy.scrollTo("prompt", anchor: .bottom)
+                            }
+                        }
+                    }
+                }
             }
-            
+
             // Floating Back Button
             backButton
         }
         .navigationBarHidden(true)
         .enableSwipeBack()
         .safeAreaInset(edge: .bottom) {
-            bottomBar
+            if promptFocused {
+                doneButton
+            } else {
+                bottomBar
+            }
         }
         .background(AppTheme.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
@@ -83,6 +106,16 @@ struct TemplateDetailView: View {
         .fullScreenCover(item: $appState.activeJobId) { jobId in
             GenerationStatusView(jobId: jobId)
         }
+        .onChange(of: startedJob?.status) { _, newStatus in
+            if case .completed = newStatus {
+                generationWasCompleted = true
+            }
+        }
+        .onChange(of: appState.activeJobId) { _, newId in
+            if newId == nil && startedJobId != nil {
+                dismiss()
+            }
+        }
         .onAppear {
             appState.tabBarHidden = true
         }
@@ -90,11 +123,16 @@ struct TemplateDetailView: View {
             appState.tabBarHidden = false
         }
     }
-    
+
     @State private var showingCamera = false
-    
+
+    private var startedJob: GenerationJob? {
+        guard let jid = startedJobId else { return nil }
+        return appState.generationJobs.first(where: { $0.id == jid })
+    }
+
     // MARK: - Back Button
-    
+
     private var backButton: some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -115,9 +153,9 @@ struct TemplateDetailView: View {
         .padding(.leading, AppTheme.Spacing.md)
         .padding(.top, 10)
     }
-    
+
     // MARK: - Header
-    
+
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
             Text(template.title)
@@ -125,11 +163,11 @@ struct TemplateDetailView: View {
                 .foregroundStyle(AppTheme.Colors.textPrimary)
         }
     }
-    
+
     // MARK: - Photo Section
 
     private var photoSection: some View {
-        Group {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
             if let image = selectedImage {
                 ZStack(alignment: .topTrailing) {
                     Image(uiImage: image)
@@ -154,58 +192,67 @@ struct TemplateDetailView: View {
                     .fill(AppTheme.Colors.secondaryBackground)
                     .frame(height: 180)
                     .overlay {
-                        VStack(spacing: 8) {
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 28))
-                                .foregroundStyle(AppTheme.Colors.textQuaternary)
-                            Text(template.photographHint)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(AppTheme.Colors.textTertiary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
-                        }
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(AppTheme.Colors.textQuaternary)
                     }
             }
         }
     }
-    
-    // MARK: - Advanced Section
-    
-    private var advancedSection: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-            Button {
-                withAnimation(.spring(response: 0.3)) {
-                    showAdvanced.toggle()
-                }
-            } label: {
-                HStack {
-                    Label("Custom prompt (Optional)", systemImage: "sparkles")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(AppTheme.Colors.textQuaternary)
-                        .rotationEffect(.degrees(showAdvanced ? 90 : 0))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            
-            if showAdvanced {
-                TextField("Add specific details...", text: $customPrompt, axis: .vertical)
+
+    // MARK: - Prompt Section
+
+    private var promptSection: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            Text("Prompt")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(AppTheme.Colors.textTertiary)
+                .textCase(.uppercase)
+                .tracking(0.5)
+
+            ZStack(alignment: .bottomTrailing) {
+                TextEditor(text: $customPrompt)
                     .font(.system(size: 15))
-                    .lineLimit(2...4)
-                    .padding(16)
-                    .background(AppTheme.Colors.secondaryBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 100, maxHeight: 200)
+                    .padding(14)
+                    .focused($promptFocused)
+
+                if !promptFocused {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        promptFocused = true
+                    } label: {
+                        Image("thickPencil")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .foregroundStyle(Color(UIColor.label))
+                            .frame(width: 40, height: 40)
+                            .background(Circle().fill(Color(UIColor.secondarySystemBackground)))
+                            .overlay(Circle().stroke(Color(UIColor.opaqueSeparator), lineWidth: 1.5))
+                            .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(10)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+                }
             }
+            .background(AppTheme.Colors.secondaryBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        promptFocused ? AppTheme.Colors.accent : Color(UIColor.opaqueSeparator),
+                        lineWidth: promptFocused ? 1.5 : 1
+                    )
+            )
+            .animation(.easeInOut(duration: 0.15), value: promptFocused)
         }
     }
-    
+
     // MARK: - Bottom Bar
 
     private var bottomBar: some View {
@@ -232,8 +279,12 @@ struct TemplateDetailView: View {
                         .foregroundStyle(AppTheme.Colors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(AppTheme.Colors.secondaryBackground)
+                        .background(AppTheme.Colors.fill)
                         .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
+                                .stroke(AppTheme.Colors.opaqueSeparator, lineWidth: 1.5)
+                        )
                 }
                 .buttonStyle(.plain)
             } else {
@@ -297,19 +348,47 @@ struct TemplateDetailView: View {
                 .ignoresSafeArea(edges: .bottom)
         )
     }
-    
+
+    // MARK: - Done Button (shown above keyboard while editing prompt)
+
+    private var doneButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            promptFocused = false
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        } label: {
+            Text("Done")
+                .font(AppTheme.Typography.headline)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(LinearGradient.accentGradient)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, AppTheme.Spacing.lg)
+        .padding(.top, AppTheme.Spacing.md)
+        .padding(.bottom, AppTheme.Spacing.lg)
+        .background(
+            AppTheme.Colors.background
+                .ignoresSafeArea(edges: .bottom)
+        )
+    }
+
     // MARK: - Actions
-    
+
     private func startGeneration() {
         guard canGenerate else { return }
-        
+
         var inputImageURL: URL? = nil
         if let image = selectedImage {
             inputImageURL = saveInputImage(image)
         }
-        
-        let prompt = customPrompt.isEmpty ? template.basePrompt : "\(template.basePrompt). \(customPrompt)"
-        
+
+        let prompt = customPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? template.basePrompt
+            : customPrompt
+
         let job = GenerationJob(
             templateId: template.id,
             templateTitle: template.title,
@@ -319,18 +398,19 @@ struct TemplateDetailView: View {
             inputImageURL: inputImageURL
         )
         appState.addJob(job)
+        startedJobId = job.id
         appState.activeJobId = job.id
-        
+
         Task {
             appState.updateJobStatus(jobId: job.id, status: .running(progress: nil))
-            
+
             let request = GenerateImageRequest(
                 prompt: prompt,
                 templateId: template.id,
                 inputImageURL: inputImageURL,
                 estimatedCreditCost: template.creditCost
             )
-            
+
             do {
                 let result = try await appEnvironment.imageService.generateImage(request)
                 // Convert full URL to relative path for persistence
@@ -345,30 +425,30 @@ struct TemplateDetailView: View {
                 } else {
                     message = error.localizedDescription
                 }
-                
+
                 appState.updateJobStatus(jobId: job.id, status: .failed(message: message))
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
             }
         }
     }
-    
+
     private func saveInputImage(_ image: UIImage) -> URL? {
         let fileManager = FileManager.default
         let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let creationsURL = documentsURL.appendingPathComponent("Creations", isDirectory: true)
-        
+
         if !fileManager.fileExists(atPath: creationsURL.path) {
             try? fileManager.createDirectory(at: creationsURL, withIntermediateDirectories: true)
         }
-        
+
         let fileURL = creationsURL.appendingPathComponent("input_\(UUID().uuidString).jpg")
-        
+
         // Resize to a reasonable dimension for AI (max 1024px)
         guard let resizedImage = image.resized(to: 1024),
               let data = resizedImage.jpegData(compressionQuality: 0.8) else {
             return nil
         }
-        
+
         do {
             try data.write(to: fileURL)
             return fileURL

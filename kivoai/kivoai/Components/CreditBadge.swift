@@ -28,31 +28,38 @@ struct CreditBadge: View {
     }
 }
 
+/// Shows the two credit pools separately. Never blends them into a single number.
 struct CreditBalanceView: View {
     let balance: CreditBalance
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.xs) {
-            // Subscription
+            // Weekly pool
             HStack(spacing: AppTheme.Spacing.xxs) {
                 Text("🪙")
                     .font(.system(size: 12))
 
-                Text("Weekly: \(balance.weeklyRemaining)")
-                    .font(AppTheme.Typography.footnote.weight(.semibold))
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                if balance.isProSubscriber {
+                    Text("Weekly: \(balance.weeklyRemaining)")
+                        .font(AppTheme.Typography.footnote.weight(.semibold))
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                } else {
+                    Text("Pro: Inactive")
+                        .font(AppTheme.Typography.footnote.weight(.semibold))
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                }
             }
 
             Text("·")
                 .foregroundStyle(AppTheme.Colors.textTertiary)
 
-            // Purchased
+            // Purchased pool
             HStack(spacing: AppTheme.Spacing.xxs) {
                 Text("🪙")
                     .font(.system(size: 11))
                     .opacity(0.6)
 
-                Text("Purchased: \(balance.purchasedRemaining)")
+                Text("+\(balance.purchasedRemaining)")
                     .font(AppTheme.Typography.footnote)
                     .foregroundStyle(AppTheme.Colors.textSecondary)
             }
@@ -69,7 +76,20 @@ struct CreditBalanceView: View {
     VStack(spacing: 20) {
         CreditBadge(cost: 10)
         CreditBadge(cost: 5, isCompact: true)
-        CreditBalanceView(balance: CreditBalance(weeklyRemaining: 445, purchasedRemaining: 100, weeklyResetAt: nil))
+        CreditBalanceView(balance: CreditBalance(
+            weeklyRemaining: 445,
+            purchasedRemaining: 100,
+            lastWeeklyRefreshAt: nil,
+            subscriptionExpiresAt: nil,
+            isProSubscriber: true
+        ))
+        CreditBalanceView(balance: CreditBalance(
+            weeklyRemaining: 0,
+            purchasedRemaining: 20,
+            lastWeeklyRefreshAt: nil,
+            subscriptionExpiresAt: nil,
+            isProSubscriber: false
+        ))
     }
     .padding()
     .background(AppTheme.Colors.groupedBackground)

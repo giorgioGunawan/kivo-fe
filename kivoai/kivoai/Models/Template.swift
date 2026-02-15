@@ -12,341 +12,529 @@ struct Template: Identifiable, Hashable {
     let category: TemplateCategory
     let creditCost: Int
     let requiresPhoto: Bool
-    let showsAdvancedPrompt: Bool
     let basePrompt: String
     let photographHint: String
     let exampleDescription: String
-    
+
     static let sampleTemplates: [Template] = [
-        // MARK: - PRANKS & CHAOS
+
+        // MARK: - PRANKS (6)
+
         Template(
             id: "prank_home_intruder",
             title: "Home Intruder",
-            subtitle: "Terrifying shadow in the background",
+            subtitle: "There's someone behind you...",
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "Highly realistic, grainy CCTV security camera footage from inside a dark living room at 3:00 AM. A mysterious, frightening shadow figure with glowing eyes and a dark hooded cloak is standing perfectly still in the distant hallway behind the subject. The figure is slightly translucent and blurry, adding to the supernatural horror. Dim cold lighting, digital red timestamp in corner, high contrast, cinematic suspense, ultra-realistic textures.",
-            photographHint: "Take a photo in your hallway or living room",
-            exampleDescription: "A creepy figure standing at the end of your dark hallway"
+            basePrompt: "Add a shadowy intruder figure lurking in the background.",
+            photographHint: "Face the camera with some open space visible behind you.",
+            exampleDescription: "A shadowy figure lurking behind you in your own home"
         ),
+
         Template(
-            id: "prank_clown_3am",
-            title: "Midnight Clown",
-            subtitle: "He's staring through the window...",
-            category: .pranks,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Terrifying flash-photography shot of a dark window at night. Pressed against the glass from the outside is a realistic, sinister clown with smudged face paint and a haunting grin. The clown's eyes are wide and bloodshot. Raindrops on the window pane are sharply focused. The subject is partially visible in the reflection, oblivious. Gritty, low-light horror aesthetic, 8k resolution.",
-            photographHint: "Take a photo of your window at night",
-            exampleDescription: "A scary clown staring at you from outside"
-        ),
-        Template(
-            id: "prank_under_bed",
-            title: "Under The Bed",
-            subtitle: "Something is hiding there...",
-            category: .pranks,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Flash-photography style shot from a low angle looking under a bed in a dark bedroom. Peeking out from the shadows is a realistic, terrifying face with wide, unblinking eyes and a sinister grin. The floor is dusty with realistic textures. The subject in the photo is partially visible, appearing to be asleep on the bed. Horror aesthetic, intense shadows, sharp details on the creeping entity, 8k resolution.",
-            photographHint: "Take a photo of your bed from a low angle",
-            exampleDescription: "A terrifying face peeking from under your bed"
-        ),
-        Template(
-            id: "prank_broken_tv",
+            id: "prank_smashed_tv",
             title: "Smashed TV",
             subtitle: "The ultimate heart-attack prank",
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Hyper-realistic close-up of a high-end OLED television screen that has been completely shattered. Massive spider-web cracks radiate from a central impact point as if hit by a heavy object. Dead pixels, colorful glitchy vertical lines, and inner liquid crystal leaking out. The reflection on the screen shows a realistic living room environment. 8k resolution, macro photography, sharp focus on the glass shards.",
-            photographHint: "Take a photo of your TV from the front",
-            exampleDescription: "Your TV looks like it was hit by a baseball"
+            basePrompt: "Shatter the TV screen with a realistic spider-web crack.",
+            photographHint: "Straight-on photo of your full TV. Turn it off for best results.",
+            exampleDescription: "Your TV screen shattered into a million pieces"
         ),
+
         Template(
-            id: "prank_spilled_wine",
-            title: "Wine Disaster",
-            subtitle: "Spilled on the white couch!",
-            category: .pranks,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Hyper-realistic close-up photo of a massive, dark red wine stain spreading quickly across a premium white fabric sofa. An empty wine glass is lying on its side. The fabric texture is extremely detailed, showing the liquid soaking into the fibers. Soft natural light, shallow depth of field, sharp focus on the xwet stain, 8k resolution.",
-            photographHint: "Take a photo of your couch",
-            exampleDescription: "A massive, realistic red wine spill stain"
-        ),
-        Template(
-            id: "prank_car_dent",
-            title: "Totaled Car",
+            id: "prank_smashed_windshield",
+            title: "Smashed Windshield",
             subtitle: "Someone hit your car!",
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "Highly detailed photograph of a luxury car with a massive, deep dent on the driver side door and a completely shattered side window. Paint is chipped and scratched realistically, with metal showing through. Shards of safety glass are scattered on the ground. Realistic outdoor lighting, overcast sky, reflective car surface, 8k resolution, cinematic quality.",
-            photographHint: "Take a photo of your car from the side",
-            exampleDescription: "A massive dent and broken window on your car"
+            basePrompt: "Shatter the windshield with realistic spider-web cracks from a central impact point.",
+            photographHint: "Shoot forward through the windshield from the driver or passenger seat.",
+            exampleDescription: "Your windshield smashed with a massive crack web"
         ),
 
-        // MARK: - APPEARANCE & STYLE
         Template(
-            id: "style_buzzcut",
+            id: "prank_totaled_car",
+            title: "Totaled Car",
+            subtitle: "Uh oh... who did this?",
+            category: .pranks,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add severe crash damage — crumpled body panels, shattered windows, and debris.",
+            photographHint: "Stand in front of or beside your car with it filling most of the frame.",
+            exampleDescription: "Your car looking completely totaled after a crash"
+        ),
+
+        Template(
+            id: "prank_mugshot",
+            title: "Mugshot",
+            subtitle: "Breaking the internet",
+            category: .pranks,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Transform into a realistic police mugshot with a height-chart background and booking placard.",
+            photographHint: "Straight-on headshot against a plain wall, neutral expression, even lighting.",
+            exampleDescription: "A dead-serious, totally believable police mugshot"
+        ),
+
+        Template(
+            id: "prank_grocery_cam",
+            title: "Grocery Store Security Cam",
+            subtitle: "Caught on camera",
+            category: .pranks,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Convert into grainy overhead CCTV footage with a 'CAM 04' overlay.",
+            photographHint: "Any store aisle or corridor. A slightly elevated angle looks most like surveillance.",
+            exampleDescription: "You caught doing something suspicious on a store security cam"
+        ),
+
+        // MARK: - HAIR (12)
+
+        Template(
+            id: "hair_buzz_cut",
             title: "Buzz Cut",
-            subtitle: "See yourself with a fresh fade",
-            category: .appearance,
+            subtitle: "Fresh fade, new you",
+            category: .hair,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Photorealistic portrait of the subject with a perfectly executed, ultra-clean buzz cut and a high skin fade. The hair texture is extremely detailed, showing individual follicles and a sharp, symmetrical hairline. Natural studio lighting, soft shadows, sharp focus on the face and hair, professional photography style, 8k resolution.",
-            photographHint: "Take a clear headshot against a plain wall",
-            exampleDescription: "A clean, stylish buzz cut transformation"
-        ),
-        Template(
-            id: "style_korean_fashion",
-            title: "Seoul Streetwear",
-            subtitle: "Modern Korean 'Oversized' style",
-            category: .appearance,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A professional street-style photograph of the subject in Seoul, wearing a premium Korean fashion outfit. Extremely oversized trench coat, wide-leg trousers, minimalist leather sneakers, and a structured tote bag. Neutral tones (beige, charcoal, cream). Background is a modern architectural street in Gangnam. High-end fashion editorial look, soft natural light, selective focus, 8k resolution.",
-            photographHint: "Full body photo in natural light",
-            exampleDescription: "Chic and modern Korean streetwear look"
-        ),
-        Template(
-            id: "style_sleeve_tattoo",
-            title: "Complete Sleeve",
-            subtitle: "Try on a highly-detailed tattoo",
-            category: .appearance,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "Hyper-realistic close-up of a human arm covered in an intricate, black-and-grey neo-traditional sleeve tattoo. The design includes detailed lions, roses, and geometric patterns. The ink looks perfectly embedded in the skin with realistic texture, slight redness around new lines, and subtle skin pores visible. Soft natural lighting, sharp focus, 8k resolution.",
-            photographHint: "Take a photo of your bare arm",
-            exampleDescription: "Intricate black and grey sleeve tattoo"
+            basePrompt: "Give the subject a sharp buzz cut with a clean high skin fade.",
+            photographHint: "Clear headshot, hair tied back, even lighting.",
+            exampleDescription: "A sharp, clean buzz cut transformation"
         ),
 
-        // MARK: - FANTASY & ROLEPLAY
         Template(
-            id: "fan_celebrity_date",
-            title: "Celebrity Date",
-            subtitle: "Dinner with your favorite star",
-            category: .fantasy,
+            id: "hair_korean_perm",
+            title: "Korean Perm",
+            subtitle: "Bouncy, effortless waves",
+            category: .hair,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "Highly realistic, paparazzi-style photograph of the subject sitting at a candle-lit table in a luxury rooftop restaurant in Paris. Sitting directly across and laughing is a world-famous celebrity. Warm ambient lighting, bokeh background of the Eiffel Tower, expensive wine glasses, high-end fashion, cinematic atmosphere, 8k resolution, authentic film look.",
-            photographHint: "Photo of yourself sitting at a table",
-            exampleDescription: "A romantic dinner with a Hollywood star"
-        ),
-        Template(
-            id: "fan_wedding",
-            title: "Royal Wedding",
-            subtitle: "Your special day in a castle",
-            category: .fantasy,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A breathtaking, professional wedding photograph of the subject dressed in a magnificent, lace-detailed designer wedding gown or a sharp white tuxedo. The setting is a grand, sun-drenched cathedral with stained glass windows. Golden hour light streaming in, flower petals on the floor, soft romantic focus, ultra-detailed fabric, 8k resolution, vogue magazine style.",
-            photographHint: "Full body formal photo",
-            exampleDescription: "You at your dream wedding in a cathedral"
+            basePrompt: "Give the subject a trendy Korean perm with bouncy, voluminous waves.",
+            photographHint: "Clear headshot, hair down, good lighting.",
+            exampleDescription: "Voluminous, bouncy Korean perm waves"
         ),
 
-        // MARK: - POP CULTURE & GAMES
         Template(
-            id: "pop_gta_version",
-            title: "GTA Loading Screen",
-            subtitle: "Welcome to Los Santos",
-            category: .popCulture,
+            id: "hair_modern_mullet",
+            title: "Modern Mullet",
+            subtitle: "Business up front, party in the back",
+            category: .hair,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Iconic Grand Theft Auto V loading screen art style. Digital illustration of the subject with thick black outlines, bold cell shading, and vibrant saturated colors. The subject looks like a stylized video game character holding a stack of cash or leanin against a luxury car. Background features a palm-tree-lined Los Angeles street with a sunset glow. High-quality vector art style.",
-            photographHint: "Cool pose, looking at camera",
-            exampleDescription: "You as a GTA 5 loading screen character"
-        ),
-        Template(
-            id: "pop_minecraft",
-            title: "Minecraft Avatar",
-            subtitle: "Enter the world of blocks",
-            category: .popCulture,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "A custom Minecraft character skin that accurately replicates the subject's features, hair, and clothing in a 64x64 pixel blocky style. The 3D avatar is standing in a lush Minecraft birch forest holding a diamond sword. Subsurface scattering on skin blocks, sharp shadows, iconic blocky aesthetic, 4k render.",
-            photographHint: "Photo showing your face and outfit clearly",
-            exampleDescription: "A custom 3D Minecraft skin version of you"
-        ),
-        Template(
-            id: "pop_fortnite",
-            title: "Fortnite Skin",
-            subtitle: "Drop into the battlefield",
-            category: .popCulture,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A high-quality 3D render of the subject as a playable Fortnite character. Clean, smooth 3D modeling, vibrant colors, wearing futuristic tactical armor with glowing neon accents. The character is performing a 'Victory Royale' emote in the middle of a colorful Fortnite-themed landscape. Unreal Engine 5 render style, sharp details, iconic game aesthetic.",
-            photographHint: "Full body standing photo",
-            exampleDescription: "You as a custom Level 100 Fortnite skin"
+            basePrompt: "Give the subject a modern mullet — short on top, longer in the back, faded sides.",
+            photographHint: "Headshot or ¾ angle so the front and side of the head are visible.",
+            exampleDescription: "A modern, fashion-forward mullet"
         ),
 
-        // MARK: - STYLIZATION
         Template(
-            id: "style_pixar",
-            title: "Disney/Pixar",
-            subtitle: "Turn into a 3D animated hero",
-            category: .stylization,
+            id: "hair_long_flow",
+            title: "Long Flow",
+            subtitle: "Shoulder-length and effortless",
+            category: .hair,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "A charming 3D character design in the style of a modern Disney/Pixar movie. The subject has large expressive eyes, smooth skin textures, and stylized, bouncy hair. The lighting is warm and magical, with high-quality global illumination. The character is wearing a cute, detailed outfit. Background is a whimsical, colorful landscape. 8k resolution, Octane render.",
-            photographHint: "Clear face photo with a big smile",
-            exampleDescription: "A high-quality 3D Pixar version of you"
+            basePrompt: "Give the subject flowing, healthy shoulder-length hair.",
+            photographHint: "Chest-up photo facing forward, neck and shoulders visible.",
+            exampleDescription: "Beautiful, flowing shoulder-length hair"
         ),
+
         Template(
-            id: "style_anime",
-            title: "Anime Protagonist",
-            subtitle: "Studio Ghibli aesthetic",
-            category: .stylization,
+            id: "hair_pixie_cut",
+            title: "Pixie Cut",
+            subtitle: "Short, sharp, iconic",
+            category: .hair,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A beautiful, hand-drawn anime illustration in the iconic Studio Ghibli style. The subject features soft features, expressive eyes, and natural-looking hair. The background is a sprawling green meadow with a blue sky and fluffy white clouds. Painted watercolor textures, nostalgic atmosphere, high-quality traditional cel-shading art.",
-            photographHint: "Clear headshot or waist-up photo",
-            exampleDescription: "You as a hero in a Studio Ghibli film"
+            basePrompt: "Give the subject a sharp, textured pixie cut.",
+            photographHint: "Well-lit headshot, hair pulled back tightly, plain background.",
+            exampleDescription: "A sharp, chic pixie cut"
         ),
+
         Template(
-            id: "style_claymation",
-            title: "Claymation Style",
-            subtitle: "Wallace & Gromit aesthetic",
-            category: .stylization,
+            id: "hair_short_bob",
+            title: "Short Bob",
+            subtitle: "Classic, clean, timeless",
+            category: .hair,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Hand-crafted claymation character model of the subject in the style of Aardman Animations. Visible thumbprints in the clay, slightly uneven textures, and chunky, expressive features. The character is wearing a tiny knitted sweater. Background is a cozy, miniature handmade room with clay furniture. Soft, warm studio lighting, characteristic stop-motion feel, 8k resolution.",
-            photographHint: "Frontal photo with a warm expression",
-            exampleDescription: "A charming handmade clay version of you"
+            basePrompt: "Give the subject a sleek chin-length bob with blunt ends.",
+            photographHint: "Forward-facing headshot, jawline and neck visible in frame.",
+            exampleDescription: "A sleek, classic chin-length bob"
         ),
+
         Template(
-            id: "style_lego",
+            id: "hair_curtain_bangs",
+            title: "Curtain Bangs",
+            subtitle: "Soft, face-framing, trendy",
+            category: .hair,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add soft, wispy curtain bangs parted down the middle.",
+            photographHint: "Headshot with forehead fully visible — no hat or headband.",
+            exampleDescription: "Soft, face-framing curtain bangs"
+        ),
+
+        Template(
+            id: "hair_wolf_cut",
+            title: "Wolf Cut",
+            subtitle: "Shaggy layers, full volume",
+            category: .hair,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Give the subject a heavily layered, voluminous wolf cut with curtain bangs.",
+            photographHint: "Headshot or chest-up, face and hair clearly visible.",
+            exampleDescription: "A shaggy, voluminous wolf cut with curtain bangs"
+        ),
+
+        Template(
+            id: "hair_long_sleek_straight",
+            title: "Long Sleek Straight",
+            subtitle: "Glossy, smooth, and razor-straight",
+            category: .hair,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Give the subject long, pin-straight, ultra-glossy hair with a center part.",
+            photographHint: "Chest-up or waist-up photo facing forward, shoulders visible.",
+            exampleDescription: "Long, ultra-straight, mirror-glossy hair"
+        ),
+
+        Template(
+            id: "hair_hollywood_blowout",
+            title: "Hollywood Blowout",
+            subtitle: "Glamorous, silky waves",
+            category: .hair,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Give the subject a glamorous Hollywood blowout with voluminous silky waves.",
+            photographHint: "Well-lit headshot or bust photo, shoulders in frame.",
+            exampleDescription: "A glamorous, voluminous Hollywood blowout"
+        ),
+
+        Template(
+            id: "hair_platinum_blonde",
+            title: "Platinum Blonde",
+            subtitle: "Ice cold, boldly bright",
+            category: .hair,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Change the subject's hair to bright platinum blonde.",
+            photographHint: "Clear headshot in bright, even lighting.",
+            exampleDescription: "Striking platinum blonde hair, icy and bright"
+        ),
+
+        Template(
+            id: "hair_pastel_pink",
+            title: "Pastel Pink",
+            subtitle: "Dreamy, soft, and sweet",
+            category: .hair,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Change the subject's hair to soft pastel pink.",
+            photographHint: "Clear headshot in bright, even lighting.",
+            exampleDescription: "Soft, dreamy pastel pink hair"
+        ),
+
+        // MARK: - TATTOOS (8)
+
+        Template(
+            id: "tattoo_bw_sleeve",
+            title: "Full Sleeve",
+            subtitle: "Black & grey realism",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a detailed black and grey realism tattoo sleeve to the arm.",
+            photographHint: "Bare arm in good lighting, from shoulder to wrist.",
+            exampleDescription: "A full black and grey realism tattoo sleeve"
+        ),
+
+        Template(
+            id: "tattoo_japanese_sleeve",
+            title: "Japanese Irezumi Sleeve",
+            subtitle: "Traditional bold and colorful",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a traditional Japanese Irezumi tattoo sleeve with koi fish, cherry blossoms, and waves.",
+            photographHint: "Bare arm in good lighting, from shoulder to wrist.",
+            exampleDescription: "A vibrant full Japanese Irezumi sleeve tattoo"
+        ),
+
+        Template(
+            id: "tattoo_fine_line_floral",
+            title: "Fine Line Floral",
+            subtitle: "Delicate botanical forearm piece",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add delicate fine-line floral tattoos to the forearm.",
+            photographHint: "Close-up of bare forearm, inner side facing up, even lighting.",
+            exampleDescription: "Delicate fine-line botanical tattoos on the forearm"
+        ),
+
+        Template(
+            id: "tattoo_minimal_quote",
+            title: "Minimal Quote",
+            subtitle: "Simple script on the forearm",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a simple elegant script tattoo to the forearm.",
+            photographHint: "Close-up of bare forearm, inner side facing up.",
+            exampleDescription: "An elegant script quote tattoo on the forearm"
+        ),
+
+        Template(
+            id: "tattoo_snake_forearm",
+            title: "Snake Wrap",
+            subtitle: "Serpent coiled around the forearm",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a detailed snake tattoo coiling and wrapping around the forearm.",
+            photographHint: "Bare forearm, slightly rotated to show both sides.",
+            exampleDescription: "A detailed snake tattoo wrapping around the forearm"
+        ),
+
+        Template(
+            id: "tattoo_tribal_polynesian",
+            title: "Tribal Polynesian",
+            subtitle: "Bold patterns on the upper arm",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add bold Polynesian tribal tattoo patterns to the upper arm and shoulder.",
+            photographHint: "Bare upper arm and shoulder, arm held out at a 45° angle.",
+            exampleDescription: "Bold Polynesian tribal tattoos covering the shoulder and bicep"
+        ),
+
+        Template(
+            id: "tattoo_patchwork",
+            title: "Patchwork Tattoos",
+            subtitle: "Eclectic flash art collection",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a collection of patchwork flash tattoos scattered naturally across the arm.",
+            photographHint: "Bare arm from shoulder to wrist in good lighting.",
+            exampleDescription: "An eclectic collection of patchwork tattoos across the arm"
+        ),
+
+        Template(
+            id: "tattoo_full_back_dragon",
+            title: "Full Back Dragon",
+            subtitle: "Massive dragon tattoo, full back",
+            category: .tattoos,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a massive detailed dragon tattoo covering the full back.",
+            photographHint: "Bare back fully in frame from shoulders to lower back.",
+            exampleDescription: "A massive, dramatic dragon tattoo covering the full back"
+        ),
+
+        // MARK: - CARTOON (8)
+
+        Template(
+            id: "cartoon_bratz",
+            title: "Bratz Doll",
+            subtitle: "Y2K glam, oversized everything",
+            category: .cartoon,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Transform into a Bratz doll illustration with oversized head, glossy lips, and Y2K fashion.",
+            photographHint: "Clear headshot or chest-up, any expression.",
+            exampleDescription: "You as a glamorous, fashion-forward Bratz doll"
+        ),
+
+        Template(
+            id: "cartoon_lego",
             title: "LEGO Minifigure",
             subtitle: "Everything is awesome!",
-            category: .stylization,
+            category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A professional studio photograph of a custom LEGO minifigure that looks exactly like the subject. Authentic plastic texture with realistic mold lines and slight sheen. The minifigure features custom-printed clothes and hair that match the subject's style. Sitting on a LEGO baseplate with a blurry LEGO city in the background. Miniature photography, sharp focus, vibrant colors.",
-            photographHint: "Photo showing your favorite outfit",
+            basePrompt: "Transform into a custom LEGO minifigure with a matching face and outfit.",
+            photographHint: "Face and outfit clearly visible in the photo.",
             exampleDescription: "A custom LEGO minifigure version of you"
         ),
 
-        // MARK: - TRANSFORMATION
         Template(
-            id: "trans_zombie",
-            title: "The Last of Us",
-            subtitle: "Zombie apocalypse Survivor",
-            category: .transformation,
+            id: "cartoon_action_figure",
+            title: "Toy Box / Action Figure",
+            subtitle: "Boxed and ready for the shelf",
+            category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "A cinematic, hyper-realistic portrait of the subject transformed into a Clicker from The Last of Us. Cordyceps fungus is erupting from the head in intricate, terrifying orange and white patterns. Clothes are tattered and weathered. The lighting is dark and moody, with dust motes floating in a single beam of light. Intense horror atmosphere, ultra-detailed textures, 8k resolution.",
-            photographHint: "Close-up face photo, neutral expression",
-            exampleDescription: "A terrifyingly realistic zombie transformation"
-        ),
-        Template(
-            id: "trans_bodybuilder",
-            title: "Superhero Physique",
-            subtitle: "Instant gym transformation",
-            category: .transformation,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A professional fitness photography shot of the subject with an elite, superhero-level physique. Extremely defined muscles, vascularity, and 6-pack abs. The subject is standing in a gritty, high-contrast gym with dramatic rim lighting. Sweat glistenin on skin, ultra-detailed muscle fibers, cinematic quality, 8k resolution, Men's Health magazine style.",
-            photographHint: "Full body photo, preferably in gym wear",
-            exampleDescription: "Your head on a world-class athlete's body"
-        ),
-        Template(
-            id: "trans_age_progression",
-            title: "10 Years Older",
-            subtitle: "A glimpse into the future",
-            category: .transformation,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "A photorealistic age-progression portrait. The subject's face features realistic signs of aging, including subtle forehead wrinkles, fine lines around the eyes, slightly thinner skin, and a few distinguished grey hairs in the eyebrows and temples. The essence and bone structure remain identical to the subject. Professional studio lighting, sharp focus, 8k resolution.",
-            photographHint: "Clear front-facing headshot",
-            exampleDescription: "A realistic look at yourself 10 years from now"
+            basePrompt: "Place the subject as a boxed action figure in colorful toy packaging.",
+            photographHint: "Full-body photo, standing straight, plain background.",
+            exampleDescription: "You as a boxed action figure on a store shelf"
         ),
 
-        // MARK: - SURVEILLANCE
         Template(
-            id: "srv_grocery_store",
-            title: "Grocery Cam",
-            subtitle: "Busted in 4K",
-            category: .surveillance,
+            id: "cartoon_ghibli",
+            title: "Studio Ghibli Style",
+            subtitle: "Soft, painterly, and magical",
+            category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "Highly realistic, top-down security camera footage from a bright grocery store aisle. The subject is caught in a candid, suspicious moment. Over-exposed florescent lighting, high digital noise, grainy texture. Digital overlay with 'AISLE 4 - CAM 12' and a red blinking 'REC' icon. Realistic convenience store environment, 8k resolution.",
-            photographHint: "Take a photo in an aisle or corridor",
-            exampleDescription: "Grainy convenience store security footage of you"
-        ),
-        Template(
-            id: "srv_caught_stealing",
-            title: "Airport Security",
-            subtitle: "Caught on the hidden cam",
-            category: .surveillance,
-            creditCost: 10,
-            requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "Grainy, wide-angle monochromatic security camera footage from an airport terminal. The subject is seen at the center of the frame, caught in a suspicious pose. Low resolution, digital noise, high contrast black and white, digital timestamp 'SEC-CAM 04' in the corner. Fish-eye lens distortion, authentic surveillance look, high virality style.",
-            photographHint: "Take a photo in an open crowded area",
-            exampleDescription: "You caught on a grainy airport security camera"
+            basePrompt: "Transform into a hand-painted Studio Ghibli character illustration.",
+            photographHint: "Clear headshot or waist-up, natural expression.",
+            exampleDescription: "You as a character in a Studio Ghibli film"
         ),
 
-        // MARK: - STATUS
         Template(
-            id: "stat_forbes",
-            title: "Forbes 30 Under 30",
-            subtitle: "The world's next top CEO",
-            category: .status,
+            id: "cartoon_anime",
+            title: "Anime Protagonist",
+            subtitle: "Main character energy",
+            category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "An authentic Forbes Magazine cover featuring a powerful, professional portrait of the subject. The subject is wearing a sharp, tailored luxury suit and standing in a modern glass office overlooking a city skyline. Bold 'FORBES' masthead at the top, headline 'THE FUTURE OF MODERN BUSINESS'. Crisp typography, high-end editorial lighting, 8k resolution, professional photography.",
-            photographHint: "Formal photo in professional attire",
-            exampleDescription: "You on the cover of Forbes magazine"
+            basePrompt: "Transform into a vibrant anime protagonist illustration.",
+            photographHint: "Headshot or waist-up, facing the camera.",
+            exampleDescription: "You as the main character in an anime series"
         ),
+
         Template(
-            id: "stat_vogue",
-            title: "Vogue Cover",
-            subtitle: "The new face of fashion",
-            category: .status,
+            id: "cartoon_pixar",
+            title: "Pixar Style",
+            subtitle: "3D animated and full of heart",
+            category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: true,
-            basePrompt: "A high-fashion, high-contrast Vogue Magazine cover featuring the subject. The subject is in a dramatic pose, wearing avant-garde luxury fashion and bold makeup. Minimalist background, professional studio lighting with deep shadows. Iconic 'VOGUE' masthead at the top. Sharp focus, ultra-detailed skin and fabric, 8k resolution.",
-            photographHint: "High-fashion post, good lighting",
-            exampleDescription: "You as a world-class model on Vogue's cover"
+            basePrompt: "Transform into a 3D Pixar-style animated character.",
+            photographHint: "Clear headshot, expressive face, even lighting.",
+            exampleDescription: "You as a lovable 3D Pixar character"
         ),
+
         Template(
-            id: "stat_mugshot",
-            title: "Mugshot",
-            subtitle: "Breaking the internet",
-            category: .status,
+            id: "cartoon_simpsons",
+            title: "The Simpsons Style",
+            subtitle: "Welcome to Springfield",
+            category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            showsAdvancedPrompt: false,
-            basePrompt: "A highly realistic, gritty police mugshot of the subject. Standing against a grey height-chart background with black lines and numbers. Harsh, direct flash lighting, cast shadows on the wall, neutral expression. Subject is holding a black booking board with white text 'COUNTY JAIL - 047291'. Authentic high-contrast crime photography style.",
-            photographHint: "Stand against a plain light-colored wall",
-            exampleDescription: "A realistic and viral police mugshot"
+            basePrompt: "Transform into a Simpsons character with classic yellow skin and bold outlines.",
+            photographHint: "Clear headshot or chest-up, any expression.",
+            exampleDescription: "Your very own Springfield Simpsons character"
+        ),
+
+        Template(
+            id: "cartoon_claymation",
+            title: "Claymation Style",
+            subtitle: "Wallace & Gromit vibes",
+            category: .cartoon,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Transform into a handcrafted Aardman-style claymation character.",
+            photographHint: "Clear frontal headshot, even soft lighting.",
+            exampleDescription: "A charming handmade claymation version of you"
+        ),
+
+        // MARK: - FACE TRANSFORMATIONS (5)
+
+        Template(
+            id: "face_baby",
+            title: "Baby Version",
+            subtitle: "You, but tiny and adorable",
+            category: .faceTransformations,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Transform the subject into an adorable baby version of themselves.",
+            photographHint: "Clear straight-on headshot, even lighting, plain background.",
+            exampleDescription: "An adorable baby version of your exact face"
+        ),
+
+        Template(
+            id: "face_oldify",
+            title: "Oldify",
+            subtitle: "20 years into the future",
+            category: .faceTransformations,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Age the subject by 20 years — wrinkles, greying temples, and deeper skin lines.",
+            photographHint: "Forward-facing headshot, no strong shadows on the face.",
+            exampleDescription: "A realistic look at yourself 20 years from now"
+        ),
+
+        Template(
+            id: "face_youngify",
+            title: "Youngify",
+            subtitle: "Turn back the clock",
+            category: .faceTransformations,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "De-age the subject by 10–15 years with smoother skin and a fresher complexion.",
+            photographHint: "Clear headshot in even lighting, relaxed expression.",
+            exampleDescription: "A realistic younger version of your face"
+        ),
+
+        Template(
+            id: "face_weight_gain",
+            title: "Weight Gain",
+            subtitle: "A little more of you",
+            category: .faceTransformations,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Make the subject look noticeably heavier with a fuller face and rounder cheeks.",
+            photographHint: "Chest-up or waist-up, straight-on angle, even lighting.",
+            exampleDescription: "A natural-looking weight gain transformation"
+        ),
+
+        Template(
+            id: "face_weight_loss",
+            title: "Weight Loss",
+            subtitle: "Your lean, sculpted look",
+            category: .faceTransformations,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Make the subject look noticeably slimmer with defined cheekbones and a sharper jawline.",
+            photographHint: "Chest-up or waist-up, straight-on angle, even lighting.",
+            exampleDescription: "A natural-looking weight loss transformation"
+        ),
+
+        // MARK: - PEOPLE (3)
+
+        Template(
+            id: "people_celebrity",
+            title: "Celebrity",
+            subtitle: "Pick one or get a surprise",
+            category: .people,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a famous celebrity naturally beside the subject in the photo.",
+            photographHint: "Clear headshot or waist-up. Type a celebrity name if you have someone in mind.",
+            exampleDescription: "You in a photo with a famous celebrity"
+        ),
+
+        Template(
+            id: "people_ai_boyfriend",
+            title: "AI Boyfriend",
+            subtitle: "Your perfect partner",
+            category: .people,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add an attractive AI boyfriend naturally beside the subject.",
+            photographHint: "Chest-up or full-body in good lighting, relaxed pose.",
+            exampleDescription: "A real-looking couple photo with your AI boyfriend"
+        ),
+
+        Template(
+            id: "people_ai_girlfriend",
+            title: "AI Girlfriend",
+            subtitle: "Your perfect partner",
+            category: .people,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add an attractive AI girlfriend naturally beside the subject.",
+            photographHint: "Chest-up or full-body in good lighting, relaxed pose.",
+            exampleDescription: "A real-looking couple photo with your AI girlfriend"
         )
     ]
-    
+
     static func templates(for category: TemplateCategory) -> [Template] {
         sampleTemplates.filter { $0.category == category }
     }

@@ -13,23 +13,24 @@ struct MainTabView: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
     @State private var selectedTab: Tab = .home
     @State private var showingSignIn: Bool = false
-    
+    @State private var toastJob: GenerationJob? = nil
+
     enum Tab {
         case home
         case library
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             // Content
             HomeView()
                 .opacity(selectedTab == .home ? 1 : 0)
                 .id(Tab.home)
-            
+
             AlbumView()
                 .opacity(selectedTab == .library ? 1 : 0)
                 .id(Tab.library)
-            
+
             // Tab Bar Area
             tabBar
                 .offset(y: appState.tabBarHidden ? 120 : 0)
@@ -38,6 +39,38 @@ struct MainTabView: View {
         .ignoresSafeArea(.keyboard)
         .background(AppTheme.Colors.background.ignoresSafeArea())
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.tabBarHidden)
+        // Completion toast
+        .overlay(alignment: .top) {
+            if let _ = toastJob {
+                CompletionToastView {
+                    withAnimation(.spring(response: 0.3)) {
+                        toastJob = nil
+                    }
+                    selectedTab = .library
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
+                .zIndex(100)
+            }
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: toastJob?.id)
+        .onChange(of: appState.completionNotification?.id) { _, newId in
+            guard newId != nil else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                toastJob = appState.completionNotification
+            }
+            appState.completionNotification = nil
+            // Auto-dismiss
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                withAnimation(.spring(response: 0.3)) {
+                    toastJob = nil
+                }
+            }
+        }
         .sheet(isPresented: $showingSignIn) {
             SignInView {
                 showingSignIn = false
@@ -118,7 +151,22 @@ struct MainTabView: View {
                 Circle()
                     .fill(LinearGradient.accentGradient)
                     .frame(width: 56, height: 56)
-                
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        .white.opacity(0.7),
+                                        .white.opacity(0.1),
+                                        .white.opacity(0.35)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+
                 Image(systemName: "plus")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(.white)
@@ -156,6 +204,32 @@ struct TabButton: View {
             .contentShape(Rectangle())
             .scaleEffect(isSelected ? 1.05 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Completion Toast
+
+private struct CompletionToastView: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .bold))
+                Text("Creation ready")
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(
+                Capsule()
+                    .fill(AppTheme.Colors.textPrimary)
+                    .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
+            )
         }
         .buttonStyle(.plain)
     }

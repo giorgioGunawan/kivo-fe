@@ -74,6 +74,7 @@ struct HomeView: View {
             .sheet(isPresented: $appState.showingCreditsSheet) {
                 CreditDetailsSheet()
                     .environmentObject(appState)
+                    .environmentObject(appEnvironment)
             }
             .sheet(isPresented: $appState.showingPaywall) {
                 PaywallView()
@@ -83,28 +84,32 @@ struct HomeView: View {
     }
     
     // MARK: - Header Info
-    
+
     @ViewBuilder
     private var unifiedCreditPill: some View {
-        if appState.creditBalance.total > 0 && !appState.debugZeroCredits {
-            // State A: User has credits
+        let balance = appState.creditBalance
+        let hasCredits = balance.total > 0 && !appState.debugZeroCredits
+
+        if hasCredits {
+            // State A: User has credits — show combined total
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 appState.showingCreditsSheet = true
             } label: {
-                HStack(spacing: 5) {
+                HStack(spacing: 4) {
                     Text("🪙")
                         .font(.system(size: 12))
-                    Text("\(appState.creditBalance.total)")
+
+                    Text(verbatim: String(balance.total))
                         .font(.system(size: 13, weight: .black))
+                        .foregroundColor(AppTheme.Colors.textPrimary)
                 }
-                .foregroundColor(AppTheme.Colors.textPrimary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
         } else {
-            // State B: User has ZERO credits
+            // State B: No credits at all
             Button {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 appState.showingPaywall = true
@@ -125,6 +130,7 @@ struct HomeView: View {
             ForEach(TemplateCategory.allCases) { category in
                 CategorySection(category: category, selectedTemplate: $selectedTemplate, showingSignIn: $showingSignIn)
                     .environmentObject(appEnvironment)
+                    .environmentObject(appState)
             }
         }
     }
@@ -297,7 +303,8 @@ struct CategorySection: View {
     @Binding var selectedTemplate: Template?
     @Binding var showingSignIn: Bool
     @EnvironmentObject var appEnvironment: AppEnvironment
-    
+    @EnvironmentObject var appState: AppState
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(category.title)
@@ -305,7 +312,7 @@ struct CategorySection: View {
                 .foregroundStyle(AppTheme.Colors.textPrimary)
                 .padding(.horizontal, AppTheme.Spacing.lg)
                 .padding(.top, AppTheme.Spacing.lg)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: AppTheme.Spacing.md) {
                     ForEach(Template.templates(for: category)) { template in
@@ -321,11 +328,61 @@ struct CategorySection: View {
                         }
                         .buttonStyle(TemplateButtonStyle())
                     }
+
+                    // Custom card at end of each category
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        if appEnvironment.authManager.isAuthenticated {
+                            appState.showingCustomCreation = true
+                        } else {
+                            showingSignIn = true
+                        }
+                    } label: {
+                        CustomCardView()
+                            .frame(width: 170)
+                    }
+                    .buttonStyle(TemplateButtonStyle())
                 }
                 .padding(.horizontal, AppTheme.Spacing.lg)
                 .padding(.vertical, 32)
             }
         }
+    }
+}
+
+// MARK: - Custom Card
+
+struct CustomCardView: View {
+    var body: some View {
+        ZStack {
+            Color.white
+
+            LinearGradient(
+                colors: [Color(red: 0.32, green: 0.32, blue: 0.42), Color(red: 0.20, green: 0.20, blue: 0.30)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            VStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .stroke(.white.opacity(0.2), lineWidth: 1.5)
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "plus")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+
+                Text("Custom")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+
+            RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        }
+        .aspectRatio(0.75, contentMode: .fill)
+        .templateCardStyle()
     }
 }
 

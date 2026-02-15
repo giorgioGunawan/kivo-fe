@@ -35,31 +35,43 @@ struct CreditDetailsSheet: View {
             .padding(.bottom, AppTheme.Spacing.xl)
 
             VStack(spacing: AppTheme.Spacing.md) {
+                // Weekly pool row — only meaningful for Pro subscribers
                 creditRow(
-                    title: "Subscription Credits",
+                    title: "Pro Weekly Credits",
                     value: appState.isProSubscriber
                         ? "\(appState.creditBalance.weeklyRemaining)"
-                        : "—",
-                    subtitle: appState.isProSubscriber ? "(resets weekly)" : nil
+                        : "Inactive",
+                    subtitle: appState.isProSubscriber
+                        ? "renews with subscription"
+                        : "Subscribe to unlock",
+                    isInactive: !appState.isProSubscriber
                 )
 
+                // Purchased pool row
                 creditRow(
                     title: "Extra Credits",
                     value: "\(appState.creditBalance.purchasedRemaining)",
-                    subtitle: "(never expire)"
+                    subtitle: "never expire",
+                    isInactive: false
                 )
             }
             .padding(.horizontal, AppTheme.Spacing.lg)
 
-            // Footer
-            if appState.isProSubscriber {
-                Text(footerText)
-                    .font(AppTheme.Typography.footnote)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                    .padding(.top, AppTheme.Spacing.xl)
-                    .padding(.horizontal, AppTheme.Spacing.lg)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            // Contextual footer
+            Group {
+                if !appState.isProSubscriber && appState.creditBalance.purchasedRemaining > 0 {
+                    Text("You can still generate using your extra credits. Upgrade to Pro to unlock 500 weekly credits.")
+                        .font(AppTheme.Typography.footnote)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                } else if appState.isProSubscriber {
+                    Text(footerText)
+                        .font(AppTheme.Typography.footnote)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                }
             }
+            .padding(.top, AppTheme.Spacing.xl)
+            .padding(.horizontal, AppTheme.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
 
@@ -75,58 +87,73 @@ struct CreditDetailsSheet: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                } else {
+                    Button {
+                        showingPaywall = true
+                    } label: {
+                        Text("Buy Credits")
+                            .font(AppTheme.Typography.headline)
+                            .foregroundStyle(AppTheme.Colors.accent)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
-
-                Button {
-                    showingPaywall = true
-                } label: {
-                    Text("Buy Credits")
-                        .font(AppTheme.Typography.headline)
-                        .foregroundStyle(AppTheme.Colors.accent)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, AppTheme.Spacing.lg)
             .padding(.bottom, AppTheme.Spacing.xl)
         }
+        .background(Color(UIColor.systemBackground))
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
+        .presentationBackground(Color(UIColor.systemBackground))
         .sheet(isPresented: $showingPaywall) {
-            PaywallView(initialPlan: .credits)
+            PaywallView()
                 .environmentObject(appState)
                 .environmentObject(appEnvironment)
         }
     }
 
+    // MARK: - Helpers
+
     private var footerText: String {
         if appState.creditBalance.weeklyRemaining > 0 {
-            return "Subscription credits are used first."
+            return "Weekly credits get used up first, your top-ups are saved as a backup."
         } else {
-            return "Using extra credits until subscription refreshes."
+            return "Weekly credits all used up. Running on top-ups until your next refill."
         }
     }
 
-    private func creditRow(title: String, value: String, subtitle: String? = nil) -> some View {
+    private func creditRow(
+        title: String,
+        value: String,
+        subtitle: String?,
+        isInactive: Bool = false
+    ) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(AppTheme.Typography.headline)
-                if let subtitle = subtitle {
+                    .foregroundStyle(isInactive ? AppTheme.Colors.textTertiary : AppTheme.Colors.textPrimary)
+                if let subtitle {
                     Text(subtitle)
                         .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
                 }
             }
             Spacer()
             Text(value)
                 .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(isInactive ? AppTheme.Colors.textTertiary : AppTheme.Colors.textPrimary)
         }
         .padding()
         .background(AppTheme.Colors.secondaryBackground)
         .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                .stroke(AppTheme.Colors.textTertiary.opacity(0.25), lineWidth: 1)
+        )
     }
 }
 
