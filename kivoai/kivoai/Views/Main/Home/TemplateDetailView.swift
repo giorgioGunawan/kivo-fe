@@ -18,6 +18,7 @@ struct TemplateDetailView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var customPrompt: String
+    @State private var selectedStyleIndex: Int = 0
     @State private var isGenerating: Bool = false
     @State private var errorMessage: String?
     @State private var showError: Bool = false
@@ -27,7 +28,8 @@ struct TemplateDetailView: View {
 
     init(template: Template) {
         self.template = template
-        self._customPrompt = State(initialValue: template.basePrompt)
+        let initialPrompt = template.styleVariants.first?.prompt ?? template.basePrompt
+        self._customPrompt = State(initialValue: initialPrompt)
     }
 
     private var canGenerate: Bool {
@@ -35,6 +37,11 @@ struct TemplateDetailView: View {
         let hasCredits = appState.hasEnoughCredits(for: template.creditCost)
         let notBusy = !isGenerating
         return hasPhoto && hasCredits && notBusy
+    }
+
+    private var currentVariant: TemplateStyleVariant? {
+        guard !template.styleVariants.isEmpty else { return nil }
+        return template.styleVariants[selectedStyleIndex]
     }
 
     var body: some View {
@@ -49,6 +56,12 @@ struct TemplateDetailView: View {
                         // Photo picker
                         if template.requiresPhoto {
                             photoSection
+                        }
+
+                        // Style pills (only for templates with variants)
+                        if !template.styleVariants.isEmpty {
+                            stylePillsSection
+                                .padding(.horizontal, -AppTheme.Spacing.lg)
                         }
 
                         // Always-visible prompt editor
@@ -187,6 +200,24 @@ struct TemplateDetailView: View {
                     }
                     .padding(10)
                 }
+            } else if let variant = currentVariant,
+                      let exampleImage = UIImage(named: variant.exampleImageName) {
+                // Show the style's example image as a preview
+                ZStack(alignment: .bottomLeading) {
+                    Image(uiImage: exampleImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 260)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+
+                    Text("Example")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.black.opacity(0.5)))
+                        .padding(12)
+                }
             } else {
                 RoundedRectangle(cornerRadius: 24)
                     .fill(AppTheme.Colors.secondaryBackground)
@@ -197,6 +228,46 @@ struct TemplateDetailView: View {
                             .foregroundStyle(AppTheme.Colors.textQuaternary)
                     }
             }
+        }
+    }
+
+    // MARK: - Style Pills Section
+
+    private var stylePillsSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: AppTheme.Spacing.sm) {
+                ForEach(Array(template.styleVariants.enumerated()), id: \.element.id) { index, variant in
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            selectedStyleIndex = index
+                            customPrompt = variant.prompt
+                        }
+                    } label: {
+                        Text(variant.title)
+                            .font(.system(size: 14, weight: selectedStyleIndex == index ? .semibold : .regular))
+                            .foregroundStyle(selectedStyleIndex == index ? .white : AppTheme.Colors.textPrimary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 9)
+                            .background(
+                                selectedStyleIndex == index
+                                    ? AnyShapeStyle(LinearGradient.accentGradient)
+                                    : AnyShapeStyle(AppTheme.Colors.fill)
+                            )
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(
+                                        selectedStyleIndex == index ? Color.clear : AppTheme.Colors.opaqueSeparator,
+                                        lineWidth: 1
+                                    )
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.lg)
+            .padding(.vertical, 2)
         }
     }
 
@@ -386,7 +457,7 @@ struct TemplateDetailView: View {
         }
 
         let prompt = customPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? template.basePrompt
+            ? (currentVariant?.prompt ?? template.basePrompt)
             : customPrompt
 
         let job = GenerationJob(

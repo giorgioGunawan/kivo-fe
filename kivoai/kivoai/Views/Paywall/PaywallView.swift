@@ -43,7 +43,7 @@ struct PaywallView: View {
         var description: String {
             switch self {
             case .weekly: return "500 credits · renews weekly"
-            case .monthly: return "500 credits · renews monthly"
+            case .monthly: return "1500 credits · renews monthly"
             case .discounted: return "500 credits · forever discounted"
             }
         }
@@ -154,8 +154,12 @@ struct PaywallView: View {
     }
 
     private var benefitsSection: some View {
-        VStack(spacing: AppTheme.Spacing.md) {
-            BenefitRow(icon: "🪙", title: "500 Weekly Credits", description: "Refresh every week", isEmoji: true)
+        let credits = selectedPlan == .monthly ? "1500" : "500"
+        let period = selectedPlan == .monthly ? "Monthly" : "Weekly"
+        let refresh = selectedPlan == .monthly ? "Refresh every month" : "Refresh every week"
+
+        return VStack(spacing: AppTheme.Spacing.md) {
+            BenefitRow(icon: "🪙", title: "\(credits) \(period) Credits", description: refresh, isEmoji: true)
             BenefitRow(icon: "square.grid.2x2.fill", title: "All Templates", description: "Access every template")
             BenefitRow(icon: "wand.and.stars", title: "Priority Generation", description: "Skip the queue")
             BenefitRow(icon: "video.fill", title: "Video Coming Soon", description: "Be first to try")

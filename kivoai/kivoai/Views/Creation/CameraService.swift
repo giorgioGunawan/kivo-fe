@@ -60,13 +60,23 @@ class CameraService: NSObject, ObservableObject {
             self.session.sessionPreset = .photo
             
             do {
-                guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: self.currentPosition) else {
+                // DiscoverySession to find the best available camera
+                let discoverySession = AVCaptureDevice.DiscoverySession(
+                    deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTripleCamera],
+                    mediaType: .video,
+                    position: self.currentPosition
+                )
+                
+                guard let device = discoverySession.devices.first else {
+                    print("Error: No camera device found")
                     return
                 }
                 
                 let input = try AVCaptureDeviceInput(device: device)
                 if self.session.canAddInput(input) {
                     self.session.addInput(input)
+                } else {
+                    print("Error: Cannot add camera input")
                 }
                 
                 if self.session.canAddOutput(self.photoOutput) {
@@ -120,7 +130,13 @@ class CameraService: NSObject, ObservableObject {
             self.currentPosition = (self.currentPosition == .back) ? .front : .back
             
             do {
-                guard let newDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: self.currentPosition) else {
+                let discoverySession = AVCaptureDevice.DiscoverySession(
+                    deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera, .builtInTripleCamera],
+                    mediaType: .video,
+                    position: self.currentPosition
+                )
+                
+                guard let newDevice = discoverySession.devices.first else {
                     return
                 }
                 

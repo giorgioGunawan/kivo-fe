@@ -23,6 +23,7 @@ final class StoreKitManager: ObservableObject {
 
     @Published var products: [Product] = []
     @Published var isLoadingProducts: Bool = false
+    @Published var activeSubscriptionID: String? = nil
 
     // MARK: - Private
 
@@ -32,7 +33,10 @@ final class StoreKitManager: ObservableObject {
 
     init() {
         transactionListenerTask = listenForTransactions()
-        Task { await loadProducts() }
+        Task {
+            await loadProducts()
+            await refreshActiveSubscription()
+        }
     }
 
     deinit {
@@ -54,6 +58,22 @@ final class StoreKitManager: ObservableObject {
         }
     }
 
+    // MARK: - Active Subscription
+
+    func refreshActiveSubscription() async {
+        var activeID: String?
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let transaction) = result {
+                // If we find an active subscription belonging to our group, verify it
+                if ProductID.all.contains(transaction.productID) {
+                    activeID = transaction.productID
+                    break // Assuming one active subscription per group
+                }
+            }
+        }
+        self.activeSubscriptionID = activeID
+    }
+
     // MARK: - Purchase
 
     /// Initiates a purchase and returns the `originalTransactionId` as a String on success.
@@ -63,6 +83,7 @@ final class StoreKitManager: ObservableObject {
         case .success(let verification):
             let transaction = try verification.payloadValue
             await transaction.finish()
+            await refreshActiveSubscription()
             return String(transaction.originalID)
         case .userCancelled:
             throw StoreError.userCancelled
@@ -77,6 +98,7 @@ final class StoreKitManager: ObservableObject {
 
     func restorePurchases() async throws -> String {
         try await AppStore.sync()
+        await refreshActiveSubscription()
         
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result {
@@ -91,10 +113,11 @@ final class StoreKitManager: ObservableObject {
     // MARK: - Transaction Listener
 
     private func listenForTransactions() -> Task<Void, Never> {
-        Task.detached(priority: .background) {
+        Task.detached(priority: .background) { [weak self] in
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
                     await transaction.finish()
+                    await self?.refreshActiveSubscription()
                 }
             }
         }

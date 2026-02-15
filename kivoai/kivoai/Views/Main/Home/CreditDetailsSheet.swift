@@ -37,7 +37,7 @@ struct CreditDetailsSheet: View {
             VStack(spacing: AppTheme.Spacing.md) {
                 // Weekly pool row — only meaningful for Pro subscribers
                 creditRow(
-                    title: "Pro Weekly Credits",
+                    title: proCreditsTitle,
                     value: appState.isProSubscriber
                         ? "\(appState.creditBalance.weeklyRemaining)"
                         : "Inactive",
@@ -91,7 +91,7 @@ struct CreditDetailsSheet: View {
                     Button {
                         showingPaywall = true
                     } label: {
-                        Text("Buy Credits")
+                        Text("Buy More Credits")
                             .font(AppTheme.Typography.headline)
                             .foregroundStyle(AppTheme.Colors.accent)
                             .frame(maxWidth: .infinity)
@@ -117,11 +117,21 @@ struct CreditDetailsSheet: View {
 
     // MARK: - Helpers
 
+    private var proCreditsTitle: String {
+        if appEnvironment.storeKitManager.activeSubscriptionID == StoreKitManager.ProductID.monthly {
+            return "Pro Monthly Credits"
+        }
+        return "Pro Weekly Credits"
+    }
+
     private var footerText: String {
+        let isMonthly = appEnvironment.storeKitManager.activeSubscriptionID == StoreKitManager.ProductID.monthly
+        let period = isMonthly ? "Monthly" : "Weekly"
+
         if appState.creditBalance.weeklyRemaining > 0 {
-            return "Weekly credits get used up first, your top-ups are saved as a backup."
+            return "\(period) credits are used first before any extra credits."
         } else {
-            return "Weekly credits all used up. Running on top-ups until your next refill."
+            return "\(period) credits used up. Using extra credits."
         }
     }
 
