@@ -11,6 +11,7 @@ struct CreditDetailsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingPaywall = false
+    @State private var showingExtraCredits = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -89,7 +90,7 @@ struct CreditDetailsSheet: View {
                     .buttonStyle(.plain)
                 } else {
                     Button {
-                        showingPaywall = true
+                        showingExtraCredits = true
                     } label: {
                         Text("Buy More Credits")
                             .font(AppTheme.Typography.headline)
@@ -110,6 +111,11 @@ struct CreditDetailsSheet: View {
         .presentationBackground(Color(UIColor.systemBackground))
         .sheet(isPresented: $showingPaywall) {
             PaywallView()
+                .environmentObject(appState)
+                .environmentObject(appEnvironment)
+        }
+        .sheet(isPresented: $showingExtraCredits) {
+            ExtraCreditsSheet()
                 .environmentObject(appState)
                 .environmentObject(appEnvironment)
         }

@@ -101,7 +101,26 @@ class APIClient {
         #if DEBUG
         body["environment"] = "Sandbox"
         #endif
-        
+
+        let jsonData = try JSONSerialization.data(withJSONObject: body)
+        let _: EmptyResponse = try await performRequest(endpoint: "auth/subscription/verify", method: "POST", body: jsonData)
+    }
+
+    func verifyConsumablePurchase(
+        originalTransactionId: String,
+        transactionId: String,
+        productId: String
+    ) async throws {
+        var body: [String: String] = [
+            "originalTransactionId": originalTransactionId,
+            "transactionId": transactionId,
+            "productId": productId,
+            "environment": "Production"
+        ]
+        #if DEBUG
+        body["environment"] = "Sandbox"
+        #endif
+
         let jsonData = try JSONSerialization.data(withJSONObject: body)
         let _: EmptyResponse = try await performRequest(endpoint: "auth/subscription/verify", method: "POST", body: jsonData)
     }

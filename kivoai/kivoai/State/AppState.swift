@@ -36,6 +36,7 @@ final class AppState: ObservableObject {
 
     @Published var showingPaywall: Bool = false
     @Published var showingCreditsSheet: Bool = false
+    @Published var showingExtraCreditsSheet: Bool = false
     @Published var showingCustomCreation: Bool = false
     @Published var activeJobId: UUID? = nil
     @Published var tabBarHidden: Bool = false

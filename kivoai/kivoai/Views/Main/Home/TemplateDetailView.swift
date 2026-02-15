@@ -20,6 +20,7 @@ struct TemplateDetailView: View {
     @State private var customPrompt: String
     @State private var selectedStyleIndex: Int = 0
     @State private var isGenerating: Bool = false
+    @State private var showingExtraCreditsSheet: Bool = false
     @State private var errorMessage: String?
     @State private var showError: Bool = false
     @State private var startedJobId: UUID? = nil
@@ -118,6 +119,11 @@ struct TemplateDetailView: View {
         }
         .fullScreenCover(item: $appState.activeJobId) { jobId in
             GenerationStatusView(jobId: jobId)
+        }
+        .sheet(isPresented: $showingExtraCreditsSheet) {
+            ExtraCreditsSheet()
+                .environmentObject(appState)
+                .environmentObject(appEnvironment)
         }
         .onChange(of: startedJob?.status) { _, newStatus in
             if case .completed = newStatus {
@@ -373,9 +379,13 @@ struct TemplateDetailView: View {
 
                     if !appState.hasEnoughCredits(for: template.creditCost) {
                         Button {
-                            appState.showingPaywall = true
+                            if appState.isProSubscriber {
+                                showingExtraCreditsSheet = true
+                            } else {
+                                appState.showingPaywall = true
+                            }
                         } label: {
-                            Text("Get credits →")
+                            Text(appState.isProSubscriber ? "Top up →" : "Get Pro →")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 10)
