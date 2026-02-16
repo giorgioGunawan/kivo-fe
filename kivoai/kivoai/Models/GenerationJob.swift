@@ -97,6 +97,7 @@ struct GenerationJob: Identifiable, Codable, Hashable {
     let creditCost: Int
     let prompt: String
     private let inputImageRelativePath: String?
+    var backendJobId: Int? // Backend job ID for resuming polling
     
     var isCustom: Bool { templateId == nil }
     
@@ -117,7 +118,8 @@ struct GenerationJob: Identifiable, Codable, Hashable {
         status: GenerationStatus = .queued,
         creditCost: Int,
         prompt: String,
-        inputImageURL: URL? = nil
+        inputImageURL: URL? = nil,
+        backendJobId: Int? = nil
     ) {
         self.id = id
         self.templateId = templateId
@@ -126,6 +128,7 @@ struct GenerationJob: Identifiable, Codable, Hashable {
         self.status = status
         self.creditCost = creditCost
         self.prompt = prompt
+        self.backendJobId = backendJobId
         
         if let url = inputImageURL {
             // Check if it's already a relative path in Documents

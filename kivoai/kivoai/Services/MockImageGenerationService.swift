@@ -27,7 +27,45 @@ final class MockImageGenerationService: ImageGenerationService {
         let jobId = UUID()
         let fileURL = try saveImage(image, jobId: jobId)
         
-        return GenerateImageResult(jobId: jobId, localImageURL: fileURL)
+        return GenerateImageResult(jobId: jobId, backendJobId: Int.random(in: 1...10000), localImageURL: fileURL)
+    }
+    
+    func createJob(_ request: GenerateImageRequest) async throws -> Int {
+        // Simulate network delay
+        let delay = Double.random(in: 0.3...0.8)
+        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        
+        // Simulate occasional failure
+        if Double.random(in: 0...1) < failureRate {
+            throw ImageGenerationError.processingFailed
+        }
+        
+        // Return a mock backend job ID
+        return Int.random(in: 1...10000)
+    }
+    
+    func checkJobStatus(backendJobId: Int) async throws -> GenerateImageResult {
+        // Simulate checking job status
+        let delay = Double.random(in: 0.5...1.5)
+        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        
+        // Simulate occasional failure
+        if Double.random(in: 0...1) < failureRate {
+            throw ImageGenerationError.processingFailed
+        }
+        
+        // Generate a mock completed result
+        let image = createPlaceholderImage(for: GenerateImageRequest(
+            prompt: "Resumed job",
+            templateId: nil,
+            inputImageURL: nil,
+            estimatedCreditCost: 10
+        ))
+        
+        let jobId = UUID()
+        let fileURL = try saveImage(image, jobId: jobId)
+        
+        return GenerateImageResult(jobId: jobId, backendJobId: backendJobId, localImageURL: fileURL)
     }
     
     private func createPlaceholderImage(for request: GenerateImageRequest) -> UIImage {

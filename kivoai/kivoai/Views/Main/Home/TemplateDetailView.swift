@@ -493,7 +493,13 @@ struct TemplateDetailView: View {
             )
 
             do {
-                let result = try await appEnvironment.imageService.generateImage(request)
+                // Step 1: Create the backend job and store the ID immediately
+                let backendJobId = try await appEnvironment.imageService.createJob(request)
+                appState.updateJobBackendId(jobId: job.id, backendJobId: backendJobId)
+                
+                // Step 2: Poll for completion
+                let result = try await appEnvironment.imageService.checkJobStatus(backendJobId: backendJobId)
+                
                 // Convert full URL to relative path for persistence
                 let relativePath = "Creations/" + result.localImageURL.lastPathComponent
                 appState.updateJobStatus(jobId: job.id, status: .completed(relativePath: relativePath))

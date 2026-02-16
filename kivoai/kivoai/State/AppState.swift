@@ -147,6 +147,13 @@ final class AppState: ObservableObject {
             saveJobs()
         }
     }
+    
+    func updateJobBackendId(jobId: UUID, backendJobId: Int) {
+        if let index = generationJobs.firstIndex(where: { $0.id == jobId }) {
+            generationJobs[index].backendJobId = backendJobId
+            saveJobs()
+        }
+    }
 
     func deleteJob(_ job: GenerationJob) {
         cleanupJobFiles(job)
@@ -178,15 +185,15 @@ final class AppState: ObservableObject {
     }
 
     private func resumeJob(_ job: GenerationJob, apiClient: APIClient, imageService: ImageGenerationService) async {
-        let request = GenerateImageRequest(
-            prompt: job.prompt,
-            templateId: job.templateId,
-            inputImageURL: job.inputImageURL,
-            estimatedCreditCost: job.creditCost
-        )
-
+        // Only resume jobs that have a backend job ID
+        // Jobs without a backend ID are still in their original generation task
+        guard let backendJobId = job.backendJobId else {
+            print("[AppState] Skipping resume for job \(job.id) - no backend job ID yet (original task still running)")
+            return
+        }
+        
         do {
-            let result = try await imageService.generateImage(request)
+            let result = try await imageService.checkJobStatus(backendJobId: backendJobId)
             let relativePath = "Creations/" + result.localImageURL.lastPathComponent
             updateJobStatus(jobId: job.id, status: .completed(relativePath: relativePath))
             await refreshCreditBalance(apiClient: apiClient)
