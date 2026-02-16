@@ -31,8 +31,8 @@ struct ExtraCreditsSheet: View {
 
     private let packages: [CreditPackage] = [
         CreditPackage(id: StoreKitManager.ProductID.credits150,  credits: 150,  fallbackPrice: "$2.99",  badge: nil),
-        CreditPackage(id: StoreKitManager.ProductID.credits500,  credits: 500,  fallbackPrice: "$6.99",  badge: "MOST POPULAR"),
-        CreditPackage(id: StoreKitManager.ProductID.credits1000, credits: 1000, fallbackPrice: "$11.99", badge: "BEST VALUE"),
+        CreditPackage(id: StoreKitManager.ProductID.credits500,  credits: 500,  fallbackPrice: "$6.99",  badge: nil),
+        CreditPackage(id: StoreKitManager.ProductID.credits1000, credits: 1000, fallbackPrice: "$11.99", badge: nil),
     ]
     
     // MARK: - Body
@@ -121,8 +121,6 @@ struct ExtraCreditsSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             BenefitTick(text: "One-time purchase, no subscription")
             BenefitTick(text: "Credits never expire")
-            BenefitTick(text: "Use alongside your weekly plan")
-            BenefitTick(text: "Instant delivery")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -172,23 +170,15 @@ struct ExtraCreditsSheet: View {
                         handlePurchase(package: package)
                     }
                 }) {
-                    VStack(spacing: 2) {
-                        Text("Add Credits")
-                            .font(.system(size: 17, weight: .semibold))
-                        
-                        if let id = selectedPackageId {
-                             Text(displayPrice(for: id))
-                                .font(.caption)
-                                .opacity(0.9)
-                        }
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(isPurchaseDisabled ? AppTheme.Colors.textTertiary : AppTheme.Colors.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
-                    .shadow(color: isPurchaseDisabled ? Color.clear : AppTheme.Colors.accent.opacity(0.2), radius: 8, x: 0, y: 4)
-                    .contentShape(Rectangle())
+                    Text("Add Credits")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(isPurchaseDisabled ? AppTheme.Colors.textTertiary : AppTheme.Colors.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                        .shadow(color: isPurchaseDisabled ? Color.clear : AppTheme.Colors.accent.opacity(0.2), radius: 8, x: 0, y: 4)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(isPurchaseDisabled || appEnvironment.storeKitManager.isLoadingProducts)
@@ -330,7 +320,7 @@ struct PackageOptionRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.separator, lineWidth: isSelected ? 2 : 1)
             )
             .contentShape(Rectangle())
         }

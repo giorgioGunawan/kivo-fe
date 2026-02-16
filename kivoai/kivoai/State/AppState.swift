@@ -222,7 +222,19 @@ final class AppState: ObservableObject {
     // MARK: - Subscription Flow
 
     func handleSubscriptionVerification(transactionId: String, productId: String? = nil, apiClient: APIClient) async throws {
-        try await apiClient.verifySubscription(transactionId: transactionId, productId: productId)
+        do {
+            try await apiClient.verifySubscription(transactionId: transactionId, productId: productId)
+        } catch {
+            // Verification returned an error (e.g. 502 gateway timeout), but the backend may have
+            // still processed the subscription. Refresh balance to check the real state.
+            await refreshCreditBalance(apiClient: apiClient)
+            if !isProSubscriber {
+                // Subscription genuinely didn't activate — surface the error.
+                throw error
+            }
+            // Balance confirms pro status, so the 502 was a false alarm. Return normally.
+            return
+        }
         // isProSubscriber is derived from the refreshed balance — never set directly
         await refreshCreditBalance(apiClient: apiClient)
     }
