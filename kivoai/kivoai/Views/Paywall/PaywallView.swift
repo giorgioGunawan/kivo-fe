@@ -13,9 +13,14 @@ struct PaywallView: View {
 
     var isOneTimeOffer: Bool = false
 
-    @State private var selectedPlan: Plan = .weekly
+    @State private var selectedPlan: Plan
     @State private var isPurchasing: Bool = false
     @State private var purchaseError: String? = nil
+
+    init(isOneTimeOffer: Bool = false) {
+        self.isOneTimeOffer = isOneTimeOffer
+        self._selectedPlan = State(initialValue: isOneTimeOffer ? .discounted : .weekly)
+    }
 
     // MARK: - Plan
 
@@ -39,19 +44,18 @@ struct PaywallView: View {
             case .discounted: return "$6.99/week"
             }
         }
-
-        var description: String {
+        
+        var creditAmount: String {
             switch self {
-            case .weekly: return "500 credits · renews weekly"
-            case .monthly: return "1500 credits · renews monthly"
-            case .discounted: return "500 credits · forever discounted"
+            case .weekly, .discounted: return "500 credits / week"
+            case .monthly: return "1500 credits / month"
             }
         }
 
         var badge: String? {
             switch self {
-            case .monthly: return "Best Value"
-            case .discounted: return "One-Time Offer"
+            case .monthly: return nil
+            case .discounted: return "LIMITED OFFER"
             default: return nil
             }
         }
@@ -64,23 +68,73 @@ struct PaywallView: View {
             return [.weekly, .monthly]
         }
     }
+    
+    // MARK: - Discount Helper
+    
+    private var discountPercentage: String {
+        let products = appEnvironment.storeKitManager.products
+        
+        // Try to get actual product prices
+        if let weeklyProduct = products.first(where: { $0.id == Plan.weekly.rawValue }),
+           let discountedProduct = products.first(where: { $0.id == Plan.discounted.rawValue }) {
+            
+            let weeklyPrice = NSDecimalNumber(decimal: weeklyProduct.price).doubleValue
+            let discountedPrice = NSDecimalNumber(decimal: discountedProduct.price).doubleValue
+            
+            if weeklyPrice > 0 {
+                let discount = 1.0 - (discountedPrice / weeklyPrice)
+                let percentage = Int((discount * 100).rounded())
+                return "\(percentage)%"
+            }
+        }
+        
+        // Fallback calculation based on hardcoded fallback prices if products fail to load
+        // Weekly: 8.99, Discounted: 6.99 -> ~22%
+        // But let's just default to a safe "22%" or just "20%" as previously hardcoded if logic fails?
+        // Actually, let's calculate from the fallback strings to be robust or just return "20%" as a safe default.
+        return "20%"
+    }
 
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
+                VStack(spacing: 0) {
+                    // Header
                     headerSection
-                    benefitsSection
-                    planSelectionSection
+                        .padding(.top, AppTheme.Spacing.xl)
+                        .padding(.bottom, AppTheme.Spacing.xl)
+                        .padding(.horizontal, AppTheme.Spacing.lg)
+
+                    // Benefits
+                    if isOneTimeOffer {
+                        discountCardSection
+                            .padding(.bottom, AppTheme.Spacing.xl)
+                    } else {
+                        benefitsSection
+                            .padding(.bottom, AppTheme.Spacing.xl)
+                            .padding(.horizontal, AppTheme.Spacing.xl)
+                    }
+
+                    // Plans
+                    if !isOneTimeOffer {
+                        planSelectionSection
+                            .padding(.horizontal, AppTheme.Spacing.lg)
+                            .padding(.bottom, AppTheme.Spacing.xl)
+                    }
+
+                    // CTA
                     actionSection
-                    legalText
-                    restoreButton
-                    Spacer().frame(height: AppTheme.Spacing.xl)
+                        .padding(.horizontal, AppTheme.Spacing.lg)
+                        .padding(.bottom, AppTheme.Spacing.lg)
+
+                    // Restore
+                    if !isPurchasing {
+                        restoreButton
+                            .padding(.bottom, AppTheme.Spacing.xl)
+                    }
                 }
-                .padding(.horizontal, AppTheme.Spacing.lg)
-                .padding(.top, AppTheme.Spacing.md)
             }
             .background(AppTheme.Colors.groupedBackground)
             .navigationBarTitleDisplayMode(.inline)
@@ -102,75 +156,145 @@ struct PaywallView: View {
                     .disabled(isPurchasing)
                 }
             }
-            .alert("Purchase Failed", isPresented: .constant(purchaseError != nil), actions: {
+            .alert("Purchase Failed", isPresented: Binding(
+                get: { purchaseError != nil },
+                set: { if !$0 { purchaseError = nil } }
+            ), actions: {
                 Button("OK") { purchaseError = nil }
             }, message: {
                 Text(purchaseError ?? "")
             })
-            .onAppear {
-                if isOneTimeOffer {
-                    selectedPlan = .discounted
-                } else {
-                    selectedPlan = .weekly
-                }
-            }
         }
     }
 
     // MARK: - Sections
 
     private var headerSection: some View {
-        VStack(spacing: AppTheme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(isOneTimeOffer ? Color.red.opacity(0.15) : AppTheme.Colors.credits.opacity(0.15))
-                    .frame(width: 80, height: 80)
-
-                Image(systemName: isOneTimeOffer ? "tag.fill" : "star.fill")
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(isOneTimeOffer ? Color.red : AppTheme.Colors.credits)
-            }
-
-            VStack(spacing: AppTheme.Spacing.xs) {
-                if isOneTimeOffer {
-                    Text("Wait! One-Time Offer")
-                        .font(AppTheme.Typography.title)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                    
-                    Text("Get 20% off your subscription forever.")
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                } else {
-                    Text("Unlock Kivo Pro")
-                        .font(AppTheme.Typography.title)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-
-                    Text("Create unlimited AI masterpieces")
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                }
+        VStack(spacing: AppTheme.Spacing.sm) {
+            Text(isOneTimeOffer ? "One-time offer" : "Unlock Kivo Pro")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+                .multilineTextAlignment(.center)
+            
+            if isOneTimeOffer {
+                Text("Get \(discountPercentage) off your subscription forever.")
+                    .font(AppTheme.Typography.body)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
-
+    
+    // Original tick-list for Main Paywall
     private var benefitsSection: some View {
-        let credits = selectedPlan == .monthly ? "1500" : "500"
-        let period = selectedPlan == .monthly ? "Monthly" : "Weekly"
-        let refresh = selectedPlan == .monthly ? "Refresh every month" : "Refresh every week"
-
-        return VStack(spacing: AppTheme.Spacing.md) {
-            BenefitRow(icon: "🪙", title: "\(credits) \(period) Credits", description: refresh, isEmoji: true)
-            BenefitRow(icon: "square.grid.2x2.fill", title: "All Templates", description: "Access every template")
-            BenefitRow(icon: "wand.and.stars", title: "Priority Generation", description: "Skip the queue")
-            BenefitRow(icon: "video.fill", title: "Video Coming Soon", description: "Be first to try")
+        VStack(alignment: .leading, spacing: 16) {
+            BenefitTick(text: "Generate images at high quality")
+            BenefitTick(text: "Access 20+ trendy templates")
+            BenefitTick(text: "No watermarks on downloads")
         }
-        .padding(AppTheme.Spacing.md)
-        .background(AppTheme.Colors.background)
-        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    // New Card Design for One-Time Offer
+    private var discountCardSection: some View {
+        VStack(spacing: 24) {
+            ZStack {
+                // Card
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(white: 0.2), Color.black],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(height: 140)
+                    .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+                
+                // Text inside card
+                Text("\(discountPercentage) OFF\nFOREVER")
+                    .font(.system(size: 36, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .shadow(color: .white.opacity(0.5), radius: 10)
+                
+                // Sparkles (decorative)
+                GeometryReader { geo in
+                    // Top Left
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 24))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: -10, y: 20)
+                    
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 16))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: 10, y: -10)
+                        
+                    // Bottom Left
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 14))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: 0, y: geo.size.height + 5)
+
+                    // Top Right
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 28))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: geo.size.width + 10, y: 40)
+                        
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 14))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: geo.size.width - 10, y: 100)
+                        
+                    // Bottom Right
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 18))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: geo.size.width + 5, y: geo.size.height - 10)
+                        
+                    // More sparkles (Center-ish)
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 12))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: 40, y: geo.size.height - 20)
+                        
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 12))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                        .position(x: geo.size.width - 40, y: 20)
+                }
+            }
+            .padding(.horizontal, 40) // Give room for sparkles outside card
+            
+            // Pricing
+            VStack(spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(displayPrice(for: .weekly)) // Original Price
+                        .font(.title3)
+                        .strikethrough()
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                    
+                    Text(displayPrice(for: .discounted))
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                }
+                
+                Text("Once you close your one-time offer, it's gone!")
+                    .font(AppTheme.Typography.subheadline.weight(.semibold))
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+            }
+        }
     }
 
     private var planSelectionSection: some View {
-        VStack(spacing: AppTheme.Spacing.sm) {
+        VStack(spacing: AppTheme.Spacing.md) {
             if appEnvironment.storeKitManager.isLoadingProducts {
                 ProgressView()
                     .tint(AppTheme.Colors.accent)
@@ -193,37 +317,58 @@ struct PaywallView: View {
     }
 
     private var actionSection: some View {
-        Group {
+        VStack(spacing: AppTheme.Spacing.md) {
             if isPurchasing {
                 ProgressView()
                     .tint(AppTheme.Colors.accent)
                     .padding()
             } else {
-                Button(action: {
-                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                    impact.impactOccurred()
-                    handlePurchase()
-                }) {
-                    Text("Start Pro · \(displayPrice(for: selectedPlan))")
-                        .font(AppTheme.Typography.headline)
+                VStack(spacing: 8) {
+                    // No Commitment line - Moved ABOVE button
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13.5, weight: .bold)) // Fixed typo: size 13.5
+                        Text("No Commitment. Cancel Anytime") // Fixed typo: Commctment -> Commitment, Anytame -> Anytime
+                            .font(.system(size: 13.5, weight: .semibold)) // Fixed size to match user intent
+                    }
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    
+                    Button(action: {
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                        handlePurchase()
+                    }) {
+                        VStack(spacing: 2) {
+                            Text(ctaTitle)
+                                .font(.system(size: 17, weight: .semibold))
+                        }
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 50)
+                        .frame(height: 54)
                         .background(AppTheme.Colors.accent)
                         .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                        .shadow(color: AppTheme.Colors.accent.opacity(0.2), radius: 8, x: 0, y: 4)
                         .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(appEnvironment.storeKitManager.isLoadingProducts)
                 }
-                .buttonStyle(.plain)
-                .disabled(appEnvironment.storeKitManager.isLoadingProducts)
+
+                legalText
             }
         }
     }
+    
+    private var ctaTitle: String {
+        return isOneTimeOffer ? "Claim Offer" : "Upgrade"
+    }
 
     private var legalText: some View {
-        Text("Payment will be charged to your Apple ID account. Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
-            .font(AppTheme.Typography.caption)
-            .foregroundStyle(AppTheme.Colors.textTertiary)
+        Text("Cancel anytime. Payment charged to Apple Account. Auto-renews unless canceled 24h before end.")
+            .font(.caption2)
+            .foregroundStyle(AppTheme.Colors.textSecondary) // Changed from textTertiary to textSecondary
             .multilineTextAlignment(.center)
+            .padding(.horizontal)
     }
 
     private var restoreButton: some View {
@@ -233,12 +378,10 @@ struct PaywallView: View {
             handleRestore()
         }) {
             Text("Restore Purchases")
-                .font(AppTheme.Typography.subheadline.weight(.semibold))
+                .font(AppTheme.Typography.subheadline.weight(.medium))
                 .foregroundStyle(AppTheme.Colors.textSecondary)
-                .underline()
         }
         .buttonStyle(.plain)
-        .padding(.top, AppTheme.Spacing.md)
         .disabled(isPurchasing)
     }
 
@@ -265,8 +408,9 @@ struct PaywallView: View {
         Task {
             do {
                 let originalTransactionId = try await manager.purchase(product)
-                await appState.handleSubscriptionVerification(
+                try await appState.handleSubscriptionVerification(
                     transactionId: originalTransactionId,
+                    productId: product.id,
                     apiClient: appEnvironment.apiClient
                 )
                 await MainActor.run {
@@ -289,7 +433,7 @@ struct PaywallView: View {
         Task {
             do {
                 let transactionId = try await appEnvironment.storeKitManager.restorePurchases()
-                await appState.handleSubscriptionVerification(
+                try await appState.handleSubscriptionVerification(
                     transactionId: transactionId,
                     apiClient: appEnvironment.apiClient
                 )
@@ -307,47 +451,28 @@ struct PaywallView: View {
     }
 }
 
-// MARK: - Benefit Row
+// MARK: - Components
 
-struct BenefitRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    var isEmoji: Bool = false
-
+struct BenefitTick: View {
+    let text: String
+    
     var body: some View {
-        HStack(spacing: AppTheme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.Colors.accent.opacity(0.1))
-                    .frame(width: 40, height: 40)
-
-                if isEmoji {
-                    Text(icon)
-                        .font(.system(size: 20))
-                } else {
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(AppTheme.Colors.accent)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(AppTheme.Typography.subheadline.weight(.semibold))
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-
-                Text(description)
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-            }
-
+        HStack(spacing: 14) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 20, height: 20)
+                .background(AppTheme.Colors.accent)
+                .clipShape(Circle())
+            
+            Text(text)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+            
             Spacer()
         }
     }
 }
-
-// MARK: - Plan Card
 
 struct PlanCard: View {
     let plan: PaywallView.Plan
@@ -361,54 +486,55 @@ struct PlanCard: View {
             impact.impactOccurred()
             action()
         }) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: AppTheme.Spacing.xs) {
-                        Text(plan.title)
-                            .font(AppTheme.Typography.subheadline.weight(.semibold))
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
-
-                        if let badge = plan.badge {
-                            Text(badge)
-                                .font(AppTheme.Typography.caption2.weight(.bold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, AppTheme.Spacing.xs)
-                                .padding(.vertical, 2)
-                                .background(AppTheme.Colors.accent)
-                                .clipShape(Capsule())
-                        }
-                    }
-
-                    Text(plan.description)
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                }
-
-                Spacer()
-
-                Text(displayPrice)
-                    .font(AppTheme.Typography.headline)
-                    .foregroundStyle(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.textPrimary)
-
+            HStack(spacing: AppTheme.Spacing.md) {
+                // Radio Circle
                 ZStack {
                     Circle()
                         .stroke(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.separator, lineWidth: 2)
                         .frame(width: 22, height: 22)
-
+                    
                     if isSelected {
                         Circle()
                             .fill(AppTheme.Colors.accent)
                             .frame(width: 12, height: 12)
                     }
                 }
-                .padding(.leading, AppTheme.Spacing.sm)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(plan.title)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+                        
+                        if let badge = plan.badge {
+                            Text(badge)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(AppTheme.Colors.accent)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    
+                    Text(plan.creditAmount)
+                        .font(.system(size: 14))
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                }
+                
+                Spacer()
+                
+                Text(displayPrice)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.textPrimary)
             }
-            .padding(AppTheme.Spacing.md)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
             .background(AppTheme.Colors.background)
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
-                    .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.separator, lineWidth: isSelected ? 2 : 1)
             )
             .contentShape(Rectangle())
         }

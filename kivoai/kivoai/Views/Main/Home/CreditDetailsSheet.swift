@@ -61,7 +61,7 @@ struct CreditDetailsSheet: View {
             // Contextual footer
             Group {
                 if !appState.isProSubscriber && appState.creditBalance.purchasedRemaining > 0 {
-                    Text("You can still generate using your extra credits. Upgrade to Pro to unlock 500 weekly credits.")
+                    Text("You can still generate using your extra credits.")
                         .font(AppTheme.Typography.footnote)
                         .foregroundStyle(AppTheme.Colors.textSecondary)
                 } else if appState.isProSubscriber {

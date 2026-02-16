@@ -7,6 +7,11 @@ import Foundation
 import SwiftUI
 import Combine
 
+enum AppTab {
+    case home
+    case library
+}
+
 @MainActor
 final class AppState: ObservableObject {
 
@@ -40,6 +45,7 @@ final class AppState: ObservableObject {
     @Published var showingCustomCreation: Bool = false
     @Published var activeJobId: UUID? = nil
     @Published var tabBarHidden: Bool = false
+    @Published var selectedTab: AppTab = .home
     @Published var debugZeroCredits: Bool = false
     @Published var completionNotification: GenerationJob? = nil
     @Published var preferredCategories: [TemplateCategory] {
@@ -215,14 +221,10 @@ final class AppState: ObservableObject {
 
     // MARK: - Subscription Flow
 
-    func handleSubscriptionVerification(transactionId: String, apiClient: APIClient) async {
-        do {
-            try await apiClient.verifySubscription(transactionId: transactionId)
-            // isProSubscriber is derived from the refreshed balance — never set directly
-            await refreshCreditBalance(apiClient: apiClient)
-        } catch {
-            print("Subscription verification failed: \(error.localizedDescription)")
-        }
+    func handleSubscriptionVerification(transactionId: String, productId: String? = nil, apiClient: APIClient) async throws {
+        try await apiClient.verifySubscription(transactionId: transactionId, productId: productId)
+        // isProSubscriber is derived from the refreshed balance — never set directly
+        await refreshCreditBalance(apiClient: apiClient)
     }
 
     // MARK: - Reset (for testing)

@@ -147,7 +147,11 @@ struct HomeView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AppTheme.Spacing.md) {
-                    ForEach(appState.generationJobs.prefix(10)) { job in
+                    let jobs = appState.generationJobs
+                    let showSeeAll = jobs.count > 5
+                    let displayJobs = showSeeAll ? Array(jobs.prefix(5)) : Array(jobs.prefix(10))
+                    
+                    ForEach(displayJobs) { job in
                         CreationStatusCard(job: job)
                             .onTapGesture {
                                 if case .completed = job.status {
@@ -156,6 +160,22 @@ struct HomeView: View {
                                     appState.activeJobId = job.id
                                 }
                             }
+                    }
+                    
+                    if showSeeAll {
+                        Button {
+                            appState.selectedTab = .library
+                        } label: {
+                            ZStack {
+                                Color(uiColor: .systemGray6)
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundStyle(.gray)
+                            }
+                            .frame(width: 140, height: 140)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        }
+                        .buttonStyle(TemplateButtonStyle())
                     }
                 }
                 .padding(.horizontal, AppTheme.Spacing.lg)

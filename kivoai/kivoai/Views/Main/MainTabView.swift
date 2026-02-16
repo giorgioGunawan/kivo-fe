@@ -11,25 +11,22 @@ import SwiftUI
 struct MainTabView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var appEnvironment: AppEnvironment
-    @State private var selectedTab: Tab = .home
+
     @State private var showingSignIn: Bool = false
     @State private var toastJob: GenerationJob? = nil
 
-    enum Tab {
-        case home
-        case library
-    }
+
 
     var body: some View {
         ZStack(alignment: .bottom) {
             // Content
             HomeView()
-                .opacity(selectedTab == .home ? 1 : 0)
-                .id(Tab.home)
+                .opacity(appState.selectedTab == .home ? 1 : 0)
+                .id(AppTab.home)
 
             AlbumView()
-                .opacity(selectedTab == .library ? 1 : 0)
-                .id(Tab.library)
+                .opacity(appState.selectedTab == .library ? 1 : 0)
+                .id(AppTab.library)
 
             // Tab Bar Area
             tabBar
@@ -46,7 +43,7 @@ struct MainTabView: View {
                     withAnimation(.spring(response: 0.3)) {
                         toastJob = nil
                     }
-                    selectedTab = .library
+                    appState.selectedTab = .library
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -103,17 +100,17 @@ struct MainTabView: View {
                 TabButton(
                     icon: "house.fill",
                     label: "Home",
-                    isSelected: selectedTab == .home
+                    isSelected: appState.selectedTab == .home
                 ) {
-                    selectedTab = .home
+                    appState.selectedTab = .home
                 }
                 
                 TabButton(
                     icon: "photo.on.rectangle.angled.fill",
                     label: "Library",
-                    isSelected: selectedTab == .library
+                    isSelected: appState.selectedTab == .library
                 ) {
-                    selectedTab = .library
+                    appState.selectedTab = .library
                 }
             }
             .padding(.horizontal, 4)

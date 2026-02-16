@@ -96,8 +96,11 @@ class APIClient {
         return try await performRequest(endpoint: "credits/balance")
     }
     
-    func verifySubscription(transactionId: String) async throws {
-        var body = ["originalTransactionId": transactionId]
+    func verifySubscription(transactionId: String, productId: String? = nil) async throws {
+        var body: [String: String] = ["originalTransactionId": transactionId]
+        if let productId = productId {
+            body["productId"] = productId
+        }
         #if DEBUG
         body["environment"] = "Sandbox"
         #endif

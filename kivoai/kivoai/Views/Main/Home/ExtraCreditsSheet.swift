@@ -14,8 +14,8 @@ struct ExtraCreditsSheet: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
 
+    @State private var selectedPackageId: String? = StoreKitManager.ProductID.credits500
     @State private var isPurchasing: Bool = false
-    @State private var purchasingId: String? = nil
     @State private var purchaseError: String? = nil
 
     private let maxPurchasedCredits = 2000
@@ -31,23 +31,41 @@ struct ExtraCreditsSheet: View {
 
     private let packages: [CreditPackage] = [
         CreditPackage(id: StoreKitManager.ProductID.credits150,  credits: 150,  fallbackPrice: "$2.99",  badge: nil),
-        CreditPackage(id: StoreKitManager.ProductID.credits500,  credits: 500,  fallbackPrice: "$6.99",  badge: "Best Value"),
-        CreditPackage(id: StoreKitManager.ProductID.credits1000, credits: 1000, fallbackPrice: "$11.99", badge: nil),
+        CreditPackage(id: StoreKitManager.ProductID.credits500,  credits: 500,  fallbackPrice: "$6.99",  badge: "MOST POPULAR"),
+        CreditPackage(id: StoreKitManager.ProductID.credits1000, credits: 1000, fallbackPrice: "$11.99", badge: "BEST VALUE"),
     ]
-
+    
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: AppTheme.Spacing.xl) {
+                VStack(spacing: 0) {
+                    // Header
                     headerSection
+                        .padding(.top, AppTheme.Spacing.xl)
+                        .padding(.bottom, AppTheme.Spacing.xl)
+                        .padding(.horizontal, AppTheme.Spacing.lg)
+
+                    // Benefits
+                    benefitsSection
+                        .padding(.bottom, AppTheme.Spacing.xl)
+                        .padding(.horizontal, AppTheme.Spacing.xl)
+
+                    // Packages
                     packagesSection
+                        .padding(.horizontal, AppTheme.Spacing.lg)
+                        .padding(.bottom, AppTheme.Spacing.xl)
+
+                    // CTA
+                    actionSection
+                        .padding(.horizontal, AppTheme.Spacing.lg)
+                        .padding(.bottom, AppTheme.Spacing.lg)
+                    
+                    // Disclaimer
                     tagline
-                    Spacer().frame(height: AppTheme.Spacing.xl)
+                        .padding(.bottom, AppTheme.Spacing.xl)
                 }
-                .padding(.horizontal, AppTheme.Spacing.lg)
-                .padding(.top, AppTheme.Spacing.md)
             }
             .background(AppTheme.Colors.groupedBackground)
             .navigationBarTitleDisplayMode(.inline)
@@ -73,37 +91,44 @@ struct ExtraCreditsSheet: View {
             }, message: {
                 Text(purchaseError ?? "")
             })
+            .onAppear {
+                // Ensure a valid selection on appear
+                if selectedPackageId == nil {
+                    selectedPackageId = packages.first?.id
+                }
+            }
         }
     }
 
-    // MARK: - Header
+    // MARK: - Sections
 
     private var headerSection: some View {
-        VStack(spacing: AppTheme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.Colors.credits.opacity(0.15))
-                    .frame(width: 80, height: 80)
-                Text("🪙")
-                    .font(.system(size: 36))
-            }
+        VStack(spacing: AppTheme.Spacing.sm) {
+            Text("Top Up Credits")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+                .multilineTextAlignment(.center)
 
-            VStack(spacing: AppTheme.Spacing.xs) {
-                Text("Top Up Credits")
-                    .font(AppTheme.Typography.title)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-
-                Text("One-time purchase · Never expire")
-                    .font(AppTheme.Typography.body)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-            }
+            Text("Running low? Add more credits instantly.\nThey never expire.")
+                .font(AppTheme.Typography.body)
+                .foregroundStyle(AppTheme.Colors.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
-
-    // MARK: - Packages
+    
+    private var benefitsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            BenefitTick(text: "One-time purchase, no subscription")
+            BenefitTick(text: "Credits never expire")
+            BenefitTick(text: "Use alongside your weekly plan")
+            BenefitTick(text: "Instant delivery")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
     private var packagesSection: some View {
-        VStack(spacing: AppTheme.Spacing.sm) {
+        VStack(spacing: AppTheme.Spacing.md) {
             if appEnvironment.storeKitManager.isLoadingProducts {
                 ProgressView()
                     .tint(AppTheme.Colors.accent)
@@ -111,10 +136,19 @@ struct ExtraCreditsSheet: View {
                     .frame(height: 80)
             } else {
                 ForEach(packages) { package in
-                    packageRow(for: package)
+                    PackageOptionRow(
+                        package: package,
+                        displayPrice: displayPrice(for: package.id),
+                        isSelected: selectedPackageId == package.id,
+                        isEnabled: canBuy(package)
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedPackageId = package.id
+                        }
+                    }
                 }
             }
-
+            
             if isAtMaxLimit {
                 Text("Max credit limit reached (2,000). Use your credits before buying more.")
                     .font(AppTheme.Typography.caption)
@@ -124,86 +158,61 @@ struct ExtraCreditsSheet: View {
             }
         }
     }
-
-    private func packageRow(for package: CreditPackage) -> some View {
-        let purchasable = canBuy(package) && !isPurchasing
-        let isThisPurchasing = purchasingId == package.id
-
-        return HStack(spacing: AppTheme.Spacing.md) {
-            // Credit amount + badge
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: AppTheme.Spacing.xs) {
-                    Text("\(package.credits) Credits")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(purchasable ? AppTheme.Colors.textPrimary : AppTheme.Colors.textTertiary)
-
-                    if let badge = package.badge {
-                        Text(badge)
-                            .font(AppTheme.Typography.caption2.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 2)
-                            .background(AppTheme.Colors.accent)
-                            .clipShape(Capsule())
-                    }
-                }
-
-                // Contextual disabled reason
-                if !canBuy(package) {
-                    Text(isAtMaxLimit ? "Max limit reached" : "Would exceed 2,000 limit")
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
-                }
-            }
-
-            Spacer()
-
-            // Buy button / spinner
-            if isThisPurchasing {
+    
+    private var actionSection: some View {
+        VStack(spacing: AppTheme.Spacing.md) {
+            if isPurchasing {
                 ProgressView()
                     .tint(AppTheme.Colors.accent)
-                    .frame(width: 76)
+                    .padding()
             } else {
-                Button {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    handlePurchase(package: package)
-                } label: {
-                    Text(displayPrice(for: package.id))
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(purchasable ? .white : AppTheme.Colors.textTertiary)
-                        .padding(.horizontal, AppTheme.Spacing.md)
-                        .padding(.vertical, 10)
-                        .background(purchasable ? LinearGradient.accentGradient : LinearGradient(colors: [AppTheme.Colors.fill], startPoint: .leading, endPoint: .trailing))
-                        .clipShape(Capsule())
+                Button(action: {
+                    if let id = selectedPackageId, let package = packages.first(where: { $0.id == id }) {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        handlePurchase(package: package)
+                    }
+                }) {
+                    VStack(spacing: 2) {
+                        Text("Add Credits")
+                            .font(.system(size: 17, weight: .semibold))
+                        
+                        if let id = selectedPackageId {
+                             Text(displayPrice(for: id))
+                                .font(.caption)
+                                .opacity(0.9)
+                        }
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(isPurchaseDisabled ? AppTheme.Colors.textTertiary : AppTheme.Colors.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
+                    .shadow(color: isPurchaseDisabled ? Color.clear : AppTheme.Colors.accent.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(!purchasable)
+                .disabled(isPurchaseDisabled || appEnvironment.storeKitManager.isLoadingProducts)
             }
         }
-        .padding(AppTheme.Spacing.md)
-        .background(AppTheme.Colors.background)
-        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.Radius.md, style: .continuous)
-                .stroke(AppTheme.Colors.separator.opacity(purchasable ? 0 : 0.5), lineWidth: 1)
-        )
-        .opacity(purchasable ? 1.0 : 0.55)
     }
 
-    // MARK: - Tagline
-
     private var tagline: some View {
-        Text("Credits never expire. Used after your weekly/monthly plan.")
-            .font(AppTheme.Typography.caption)
+        Text("Purchased credits are used only after your weekly subscription credits are exhausted.")
+            .font(.caption2)
             .foregroundStyle(AppTheme.Colors.textTertiary)
             .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal)
     }
 
     // MARK: - Helpers
 
     private var isAtMaxLimit: Bool {
         appState.creditBalance.purchasedRemaining >= maxPurchasedCredits
+    }
+    
+    private var isPurchaseDisabled: Bool {
+        guard let id = selectedPackageId, let package = packages.first(where: { $0.id == id }) else { return true }
+        return !canBuy(package)
     }
 
     private func canBuy(_ package: CreditPackage) -> Bool {
@@ -227,8 +236,7 @@ struct ExtraCreditsSheet: View {
         }
 
         isPurchasing = true
-        purchasingId = package.id
-
+        
         Task {
             do {
                 let info = try await appEnvironment.storeKitManager.purchaseConsumable(product)
@@ -240,24 +248,99 @@ struct ExtraCreditsSheet: View {
                 await appState.refreshCreditBalance(apiClient: appEnvironment.apiClient)
                 await MainActor.run {
                     isPurchasing = false
-                    purchasingId = nil
                     dismiss()
                 }
             } catch StoreKitManager.StoreError.userCancelled {
                 await MainActor.run {
                     isPurchasing = false
-                    purchasingId = nil
                 }
             } catch {
                 await MainActor.run {
                     isPurchasing = false
-                    purchasingId = nil
                     purchaseError = error.localizedDescription
                 }
             }
         }
     }
 }
+
+// MARK: - Components
+
+struct PackageOptionRow: View {
+    let package: ExtraCreditsSheet.CreditPackage
+    let displayPrice: String
+    let isSelected: Bool
+    let isEnabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+            action()
+        }) {
+            HStack(spacing: AppTheme.Spacing.md) {
+                // Radio Circle
+                ZStack {
+                    Circle()
+                        .stroke(isSelected ? AppTheme.Colors.accent : AppTheme.Colors.separator, lineWidth: 2)
+                        .frame(width: 22, height: 22)
+                    
+                    if isSelected {
+                        Circle()
+                            .fill(AppTheme.Colors.accent)
+                            .frame(width: 12, height: 12)
+                    }
+                }
+                .opacity(isEnabled ? 1 : 0.5)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("\(package.credits) Credits")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(isEnabled ? AppTheme.Colors.textPrimary : AppTheme.Colors.textTertiary)
+                        
+                        if let badge = package.badge {
+                            Text(badge)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(AppTheme.Colors.accent)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    
+                    if !isEnabled {
+                        Text("Limit reached")
+                            .font(.system(size: 14))
+                            .foregroundStyle(AppTheme.Colors.textTertiary)
+                    }
+                }
+                
+                Spacer()
+                
+                Text(displayPrice)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(isSelected ? AppTheme.Colors.accent : (isEnabled ? AppTheme.Colors.textPrimary : AppTheme.Colors.textTertiary))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .background(AppTheme.Colors.background)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected ? AppTheme.Colors.accent : Color.clear, lineWidth: 2)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.6)
+    }
+}
+
+// MARK: - Previews
 
 #Preview {
     ExtraCreditsSheet()

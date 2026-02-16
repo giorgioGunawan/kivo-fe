@@ -287,6 +287,22 @@ struct TemplateDetailView: View {
                 .textCase(.uppercase)
                 .tracking(0.5)
 
+            if template.id == "people_celebrity" {
+                HStack(spacing: 6) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(AppTheme.Colors.accent)
+                    Text("Customize it: Add any celebrity you want")
+                        .font(.system(size: 13))
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(AppTheme.Colors.accent.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+
             ZStack(alignment: .bottomTrailing) {
                 TextEditor(text: $customPrompt)
                     .font(.system(size: 15))
