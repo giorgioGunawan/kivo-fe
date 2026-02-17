@@ -53,15 +53,15 @@ struct Template: Identifiable, Hashable {
         // MARK: - PRANKS (6)
 
         Template(
-            id: "prank_home_intruder",
-            title: "Homeless Man",
-            subtitle: "There's someone in your house...",
+            id: "prank_totaled_car",
+            title: "Totaled Car",
+            subtitle: "Uh oh... who did this?",
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Add a realistic homeless man naturally present inside the home — sitting on the couch, standing in the kitchen, or lurking in the background. He should look disheveled with worn clothing, as if he wandered in.",
-            photographHint: "Face the camera with some open space visible behind you.",
-            exampleDescription: "A homeless man casually in your home like he lives there"
+            basePrompt: "Add severe crash damage — crumpled body panels, shattered windows, and debris.",
+            photographHint: "Stand in front of or beside your car with it filling most of the frame.",
+            exampleDescription: "Your car looking completely totaled after a crash"
         ),
 
         Template(
@@ -77,6 +77,18 @@ struct Template: Identifiable, Hashable {
         ),
 
         Template(
+            id: "prank_home_intruder",
+            title: "Homeless Man",
+            subtitle: "There's someone in your house...",
+            category: .pranks,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Add a realistic homeless man naturally present inside the home — sitting on the couch, standing in the kitchen, or lurking in the background. He should look disheveled with worn clothing, as if he wandered in.",
+            photographHint: "Face the camera with some open space visible behind you.",
+            exampleDescription: "A homeless man casually in your home like he lives there"
+        ),
+
+        Template(
             id: "prank_smashed_windshield",
             title: "Smashed Windshield",
             subtitle: "Someone hit your car!",
@@ -86,18 +98,6 @@ struct Template: Identifiable, Hashable {
             basePrompt: "Add a small, realistic windshield crack starting from a single impact point. Subtle fracture about 5–10 cm wide. Keep the rest of the glass intact. Natural transparency and light reflection.",
             photographHint: "Shoot forward through the windshield from the driver or passenger seat.",
             exampleDescription: "Your windshield smashed with a massive crack web"
-        ),
-
-        Template(
-            id: "prank_totaled_car",
-            title: "Totaled Car",
-            subtitle: "Uh oh... who did this?",
-            category: .pranks,
-            creditCost: 10,
-            requiresPhoto: true,
-            basePrompt: "Add severe crash damage — crumpled body panels, shattered windows, and debris.",
-            photographHint: "Stand in front of or beside your car with it filling most of the frame.",
-            exampleDescription: "Your car looking completely totaled after a crash"
         ),
 
         Template(
@@ -125,6 +125,38 @@ struct Template: Identifiable, Hashable {
         ),
 
         // MARK: - APPEARANCE
+
+        Template(
+            id: "appearance_tattoos",
+            title: "Tattoos",
+            subtitle: "Pick your style",
+            category: .appearance,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "dd sparse black patchwork tattoos on the arms but not hands or wrist with uneven distribution and obvious empty skin; avoid dense coverage. keep all existing clothing fully intact and unchanged. Use random placement, varied angles, overlapping directions, and 2–8 cm sizes so it feels unplanned, with mixed, unrelated subjects (animals, words, myth, hands, symbols, abstract, geometric, tiny objects) like work by many different artists over time.",
+            photographHint: "Bare arm in good lighting, from shoulder to wrist.",
+            exampleDescription: "A bold tattoo transformation",
+            styleVariants: [
+                TemplateStyleVariant(
+                    id: "tattoo_patchwork",
+                    title: "Patchwork Tattoos",
+                    prompt: "Add sparse black patchwork tattoos on the arms but not hands or wrist with uneven distribution and obvious empty skin; avoid dense coverage. keep all existing clothing fully intact and unchanged. Use random placement, varied angles, overlapping directions, and 2–8 cm sizes so it feels unplanned, with mixed, unrelated subjects (animals, words, myth, hands, symbols, abstract, geometric, tiny objects) like work by many different artists over time.",
+                    exampleImageName: "style_tattoo_patchwork"
+                ),
+                TemplateStyleVariant(
+                    id: "tattoo_dragon_sleeve",
+                    title: "Dragon Full Sleeve",
+                    prompt: "Add a massive detailed dragon tattoo wrapping around the full arm in one cohesive black and grey sleeve.",
+                    exampleImageName: "style_tattoo_dragon_sleeve"
+                ),
+                TemplateStyleVariant(
+                    id: "tattoo_japanese_sleeve",
+                    title: "Japanese Sleeve",
+                    prompt: "Add a traditional Japanese Irezumi tattoo sleeve with koi fish, cherry blossoms, and waves.",
+                    exampleImageName: "style_tattoo_japanese_sleeve"
+                )
+            ]
+        ),
 
         Template(
             id: "appearance_men_hair",
@@ -184,87 +216,7 @@ struct Template: Identifiable, Hashable {
             ]
         ),
 
-        Template(
-            id: "appearance_tattoos",
-            title: "Tattoos",
-            subtitle: "Pick your style",
-            category: .appearance,
-            creditCost: 10,
-            requiresPhoto: true,
-            basePrompt: "Add scattered black patchwork tattoos with very uneven distribution, heavy clustering in some areas do not spread tattoos evenly. Random placement, varied angles, overlapping directions, inconsistent sizing (2–8 cm). Random subjects every generation (animals, words,myth, hands, symbols, abstract, geometric, micro objects). as if each done over time by different artists.",
-            photographHint: "Bare arm in good lighting, from shoulder to wrist.",
-            exampleDescription: "A bold tattoo transformation",
-            styleVariants: [
-                TemplateStyleVariant(
-                    id: "tattoo_patchwork",
-                    title: "Patchwork Tattoos",
-                    prompt: "Add scattered black patchwork tattoos with very uneven distribution, heavy clustering in some areas do not spread tattoos evenly. Random placement, varied angles, overlapping directions, inconsistent sizing (2–8 cm). Random subjects every generation (animals, words,myth, hands, symbols, abstract, geometric, micro objects). as if each done over time by different artists.",
-                    exampleImageName: "style_tattoo_patchwork"
-                ),
-                TemplateStyleVariant(
-                    id: "tattoo_dragon_sleeve",
-                    title: "Dragon Full Sleeve",
-                    prompt: "Add a massive detailed dragon tattoo wrapping around the full arm in one cohesive black and grey sleeve.",
-                    exampleImageName: "style_tattoo_dragon_sleeve"
-                ),
-                TemplateStyleVariant(
-                    id: "tattoo_japanese_sleeve",
-                    title: "Japanese Sleeve",
-                    prompt: "Add a traditional Japanese Irezumi tattoo sleeve with koi fish, cherry blossoms, and waves.",
-                    exampleImageName: "style_tattoo_japanese_sleeve"
-                ),
-                TemplateStyleVariant(
-                    id: "tattoo_snake",
-                    title: "Snake",
-                    prompt: "dd a detailed snake tattoo coiling and wrapping around the forearm in a continuous, elegant flow. The snake should spiral around the arm, following its anatomy, with the head clearly visible as a focal point. ",
-                    exampleImageName: "style_tattoo_snake"
-                ),
-                TemplateStyleVariant(
-                    id: "tattoo_lion",
-                    title: "Lion",
-                    prompt: "Add a bold, hyper-realistic lion head tattoo on the upper arm as a single strong centerpiece. Place the lion so it faces outward or slightly angled, with intense eyes and detailed fur texture.",
-                    exampleImageName: "style_tattoo_lion"
-                )
-            ]
-        ),
-
-        Template(
-            id: "appearance_eyebrow_slit",
-            title: "Eyebrow Slit",
-            subtitle: "Sharp and edgy",
-            category: .appearance,
-            creditCost: 10,
-            requiresPhoto: true,
-            basePrompt: "Add a precise eyebrow slit cut to give a sharp, edgy look.",
-            photographHint: "Close-up headshot with eyebrows clearly visible, even lighting.",
-            exampleDescription: "A clean, precise eyebrow slit"
-        ),
-
         // MARK: - CARTOON (8)
-
-        Template(
-            id: "cartoon_bratz",
-            title: "Bratz Doll",
-            subtitle: "Y2K glam, oversized everything",
-            category: .cartoon,
-            creditCost: 10,
-            requiresPhoto: true,
-            basePrompt: "Transform into a Bratz doll illustration with oversized head, glossy lips, and Y2K fashion.",
-            photographHint: "Clear headshot or chest-up, any expression.",
-            exampleDescription: "You as a glamorous, fashion-forward Bratz doll"
-        ),
-
-        Template(
-            id: "cartoon_lego",
-            title: "LEGO Minifigure",
-            subtitle: "Everything is awesome!",
-            category: .cartoon,
-            creditCost: 10,
-            requiresPhoto: true,
-            basePrompt: "Transform into a custom LEGO minifigure with a matching face and outfit.",
-            photographHint: "Face and outfit clearly visible in the photo.",
-            exampleDescription: "A custom LEGO minifigure version of you"
-        ),
 
         Template(
             id: "cartoon_action_figure",
@@ -288,6 +240,30 @@ struct Template: Identifiable, Hashable {
             basePrompt: "Create a detailed 3D render of a chibi Funko Pop figure, strictly based on the provided reference photo. The figure should accurately reflect the person's appearance, hairstyle, attire, and characteristic style from the photo. High detail, studio lighting, photorealistic texture, pure white background.",
             photographHint: "Clear headshot or chest-up, face and outfit visible.",
             exampleDescription: "A detailed Funko Pop figure version of you"
+        ),
+
+        Template(
+            id: "cartoon_lego",
+            title: "LEGO",
+            subtitle: "Everything is awesome!",
+            category: .cartoon,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Transform into a custom LEGO minifigure with a matching face and outfit.",
+            photographHint: "Face and outfit clearly visible in the photo.",
+            exampleDescription: "A custom LEGO minifigure version of you"
+        ),
+
+        Template(
+            id: "cartoon_bratz",
+            title: "Bratz Doll",
+            subtitle: "Y2K glam, oversized everything",
+            category: .cartoon,
+            creditCost: 10,
+            requiresPhoto: true,
+            basePrompt: "Transform into a Bratz doll illustration with oversized head, glossy lips, and Y2K fashion.",
+            photographHint: "Clear headshot or chest-up, any expression.",
+            exampleDescription: "You as a glamorous, fashion-forward Bratz doll"
         ),
 
         // MARK: - FACE TRANSFORMATIONS (5)
@@ -350,7 +326,7 @@ struct Template: Identifiable, Hashable {
             category: .people,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Add an attractive AI boyfriend naturally beside the subject.",
+            basePrompt: "Add a boyfriend naturally beside the subject.",
             photographHint: "Chest-up or full-body in good lighting, relaxed pose.",
             exampleDescription: "A real-looking couple photo with your AI boyfriend"
         ),
@@ -362,7 +338,7 @@ struct Template: Identifiable, Hashable {
             category: .people,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Add an attractive AI girlfriend naturally beside the subject.",
+            basePrompt: "Add a girlfriend naturally beside the subject.",
             photographHint: "Chest-up or full-body in good lighting, relaxed pose.",
             exampleDescription: "A real-looking couple photo with your AI girlfriend"
         )

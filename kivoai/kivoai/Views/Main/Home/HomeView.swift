@@ -127,7 +127,7 @@ struct HomeView: View {
     
     private var templatesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(TemplateCategory.allCases) { category in
+            ForEach(appState.preferredCategories) { category in
                 CategorySection(category: category, selectedTemplate: $selectedTemplate, showingSignIn: $showingSignIn)
                     .environmentObject(appEnvironment)
                     .environmentObject(appState)

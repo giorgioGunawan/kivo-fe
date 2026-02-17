@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
 
     @State private var currentStep: OnboardingStep = .welcome
-    @State private var selectedInterests: Set<TemplateCategory> = []
+    @State private var selectedInterests: [TemplateCategory] = []
     @State private var rating: Int = 0
     @State private var showingPaywall = false
     @State private var showingDiscountOffer = false
@@ -104,9 +104,8 @@ struct OnboardingView: View {
 
     private func applyInterestOrder() {
         guard !selectedInterests.isEmpty else { return }
-        let selected = TemplateCategory.allCases.filter { selectedInterests.contains($0) }
         let rest = TemplateCategory.allCases.filter { !selectedInterests.contains($0) }
-        appState.preferredCategories = selected + rest
+        appState.preferredCategories = selectedInterests + rest
     }
 
     private func requestReview() {
@@ -172,7 +171,7 @@ private struct WelcomePage: View {
 // MARK: - Page 2: Interests
 
 private struct InterestsPage: View {
-    @Binding var selectedInterests: Set<TemplateCategory>
+    @Binding var selectedInterests: [TemplateCategory]
 
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
@@ -180,14 +179,9 @@ private struct InterestsPage: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 28) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("What are you into?")
+                    Text("Pick your favourites")
                         .font(.system(size: 28, weight: .black))
                         .foregroundStyle(AppTheme.Colors.textPrimary)
-
-                    Text("We'll personalise your home screen\nfor a better experience.")
-                        .font(.system(size: 15))
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                        .lineSpacing(3)
                 }
                 .padding(.top, 56)
 
@@ -199,10 +193,10 @@ private struct InterestsPage: View {
                         ) {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
-                                if selectedInterests.contains(category) {
-                                    selectedInterests.remove(category)
+                                if let index = selectedInterests.firstIndex(of: category) {
+                                    selectedInterests.remove(at: index)
                                 } else {
-                                    selectedInterests.insert(category)
+                                    selectedInterests.append(category)
                                 }
                             }
                         }
