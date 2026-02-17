@@ -17,10 +17,10 @@ enum TemplateCategory: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .pranks: return "Pranks"
-        case .appearance: return "Appearance"
-        case .cartoon: return "Cartoon"
-        case .faceTransformations: return "Face Transformations"
-        case .people: return "People"
+        case .appearance: return "Hair & Tattoos"
+        case .cartoon: return "Cartoon Me"
+        case .faceTransformations: return "Age Me"
+        case .people: return "Partners & Celebs"
         }
     }
 
