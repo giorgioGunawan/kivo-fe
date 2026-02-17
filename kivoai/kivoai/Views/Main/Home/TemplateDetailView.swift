@@ -50,13 +50,11 @@ struct TemplateDetailView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
-                        // Header
-                        headerSection
-                            .padding(.top, 60)
-
                         // Photo picker
+                        Spacer().frame(height: 44)
                         if template.requiresPhoto {
                             photoSection
+                                .frame(maxWidth: .infinity)
                         }
 
                         // Style pills (only for templates with variants)
@@ -199,8 +197,8 @@ struct TemplateDetailView: View {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
-                        .frame(height: 260)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                        .frame(width: 235, height: 255)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
 
                     Button {
                         selectedImage = nil
@@ -219,24 +217,42 @@ struct TemplateDetailView: View {
                     Image(uiImage: exampleImg)
                         .resizable()
                         .scaledToFill()
-                        .frame(height: 260)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
-                        .animation(.easeInOut(duration: 0.3), value: exampleImageName)
+                        .frame(width: 235, height: 255)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
 
-                    Text("Example")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.black.opacity(0.5)))
-                        .padding(12)
+                    // Title overlay
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.6)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 90)
+                    .clipShape(
+                        UnevenRoundedRectangle(
+                            bottomLeadingRadius: 20,
+                            bottomTrailingRadius: 20
+                        )
+                    )
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(template.title)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(.white)
+
+                        Text("Example")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    .padding(14)
                 }
+                .frame(width: 235, height: 255)
+                .animation(.easeInOut(duration: 0.3), value: exampleImageName)
                 .id(exampleImageName)
                 .transition(.opacity)
             } else {
-                RoundedRectangle(cornerRadius: 24)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(AppTheme.Colors.secondaryBackground)
-                    .frame(height: 180)
+                    .frame(width: 235, height: 255)
                     .overlay {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 28))
@@ -267,7 +283,7 @@ struct TemplateDetailView: View {
                             .padding(.vertical, 9)
                             .background(
                                 selectedStyleIndex == index
-                                    ? AnyShapeStyle(LinearGradient.accentGradient)
+                                    ? AnyShapeStyle(Color(UIColor.darkGray))
                                     : AnyShapeStyle(AppTheme.Colors.fill)
                             )
                             .clipShape(Capsule())

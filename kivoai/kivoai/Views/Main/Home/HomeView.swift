@@ -344,7 +344,6 @@ struct CategorySection: View {
                             }
                         } label: {
                             TemplateCardView(template: template)
-                                .frame(width: 170)
                         }
                         .buttonStyle(TemplateButtonStyle())
                     }
@@ -359,7 +358,6 @@ struct CategorySection: View {
                         }
                     } label: {
                         CustomCardView()
-                            .frame(width: 170)
                     }
                     .buttonStyle(TemplateButtonStyle())
                 }
@@ -401,8 +399,10 @@ struct CustomCardView: View {
             RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         }
-        .aspectRatio(0.75, contentMode: .fill)
-        .templateCardStyle()
+        .frame(width: 155, height: 210)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
+        .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 8)
     }
 }
 

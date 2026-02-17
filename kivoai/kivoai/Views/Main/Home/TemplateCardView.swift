@@ -8,22 +8,26 @@
 import SwiftUI
 import Combine
 
+private enum CardWipeTimer {
+    static let shared = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+}
+
 struct TemplateCardView: View {
     let template: Template
-    @State private var showingAfter = false
+    @State private var wipeProgress: CGFloat = 0
 
-    private let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+    private let cardWidth: CGFloat = 155
+    private let cardHeight: CGFloat = 210
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Background Image with before/after transition
+            // Background images with wipe-line transition
             ZStack {
                 if !template.beforeImageName.isEmpty,
                    let beforeImg = UIImage(named: template.beforeImageName) {
                     Image(uiImage: beforeImg)
                         .resizable()
                         .scaledToFill()
-                        .opacity(showingAfter ? 0 : 1)
                 }
 
                 if !template.afterImageName.isEmpty,
@@ -31,7 +35,17 @@ struct TemplateCardView: View {
                     Image(uiImage: afterImg)
                         .resizable()
                         .scaledToFill()
-                        .opacity(showingAfter ? 1 : 0)
+                        .clipShape(
+                            WipeShape(progress: wipeProgress)
+                        )
+
+                    // Wipe line
+                    if wipeProgress > 0 && wipeProgress < 1 {
+                        Rectangle()
+                            .fill(.white.opacity(0.8))
+                            .frame(height: 2)
+                            .offset(y: -cardHeight / 2 + wipeProgress * cardHeight)
+                    }
                 }
 
                 // Fallback gradient if no images
@@ -47,10 +61,8 @@ struct TemplateCardView: View {
                         .foregroundStyle(.white.opacity(0.3))
                 }
             }
-            .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
-                    .stroke(Color.black.opacity(0.05), lineWidth: 1)
-            )
+            .frame(width: cardWidth, height: cardHeight)
+            .clipped()
 
             // Bottom shadow overlay for text readability
             LinearGradient(
@@ -71,12 +83,18 @@ struct TemplateCardView: View {
             }
             .padding(AppTheme.Spacing.md)
         }
-        .aspectRatio(0.75, contentMode: .fill)
-        .templateCardStyle()
-        .onReceive(timer) { _ in
+        .frame(width: cardWidth, height: cardHeight)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.black.opacity(0.05), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
+        .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 8)
+        .onReceive(CardWipeTimer.shared) { _ in
             guard !template.beforeImageName.isEmpty, !template.afterImageName.isEmpty else { return }
-            withAnimation(.easeInOut(duration: 0.8)) {
-                showingAfter.toggle()
+            withAnimation(.easeInOut(duration: 1.0)) {
+                wipeProgress = wipeProgress == 0 ? 1 : 0
             }
         }
     }
@@ -97,15 +115,28 @@ struct TemplateCardView: View {
     }
 }
 
+private struct WipeShape: Shape {
+    var progress: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addRect(CGRect(x: 0, y: 0, width: rect.width, height: rect.height * progress))
+        return path
+    }
+}
+
 #Preview {
     ZStack {
         Color.white.ignoresSafeArea()
 
         HStack(spacing: 16) {
             TemplateCardView(template: Template.sampleTemplates[0])
-                .frame(width: 170)
             TemplateCardView(template: Template.sampleTemplates[7])
-                .frame(width: 170)
         }
         .padding()
     }

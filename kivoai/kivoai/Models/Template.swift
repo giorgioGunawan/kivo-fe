@@ -254,7 +254,7 @@ struct Template: Identifiable, Hashable {
                 )
             ],
             beforeImageName: "before_womenhair",
-            afterImageName: "after_womenhair_straight"
+            afterImageName: "after_womenhair_pixiecut"
         ),
 
         // MARK: - CARTOON (8)
