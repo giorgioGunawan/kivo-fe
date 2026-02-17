@@ -311,6 +311,7 @@ private struct InterestCard: View {
 
 private struct HowItWorksPage: View {
     @State private var animationPhase: Int = 0
+    @State private var isActive: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -372,7 +373,13 @@ private struct HowItWorksPage: View {
 
             Spacer()
         }
-        .onAppear { startLoop() }
+        .onAppear {
+            isActive = true
+            startLoop()
+        }
+        .onDisappear {
+            isActive = false
+        }
     }
 
     private func startLoop() {
@@ -381,6 +388,8 @@ private struct HowItWorksPage: View {
     }
 
     private func scheduleNext() {
+        guard isActive else { return }  // Stop if view is no longer active
+        
         // TIMING CONFIGURATION (adjust these values as needed)
         let phase1Duration: Double = 1.5  // Before image visible
         let phase2Duration: Double = 1.5  // Prompt pill visible
@@ -395,6 +404,8 @@ private struct HowItWorksPage: View {
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + currentDuration) {
+            guard isActive else { return }  // Double-check before animating
+            
             withAnimation(.easeInOut(duration: 0.5)) {
                 animationPhase = (animationPhase + 1) % 3  // Loop back to 0 after 2
             }
