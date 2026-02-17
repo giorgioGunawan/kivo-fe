@@ -2,33 +2,52 @@
 //  TemplateCardView.swift
 //  kivoai
 //
-//  Full-image template card inspired by elite UI styles.
+//  Full-image template card with before/after transition.
 //
 
 import SwiftUI
+import Combine
 
 struct TemplateCardView: View {
     let template: Template
+    @State private var showingAfter = false
+
+    private let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Background Image/Gradient
+            // Background Image with before/after transition
             ZStack {
-                // Background color to ensure no transparency issues
-                Color.white
+                if !template.beforeImageName.isEmpty,
+                   let beforeImg = UIImage(named: template.beforeImageName) {
+                    Image(uiImage: beforeImg)
+                        .resizable()
+                        .scaledToFill()
+                        .opacity(showingAfter ? 0 : 1)
+                }
 
-                LinearGradient(
-                    colors: gradientColors(for: template.category),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                if !template.afterImageName.isEmpty,
+                   let afterImg = UIImage(named: template.afterImageName) {
+                    Image(uiImage: afterImg)
+                        .resizable()
+                        .scaledToFill()
+                        .opacity(showingAfter ? 1 : 0)
+                }
 
-                Image(systemName: template.category.iconName)
-                    .font(.system(size: 32, weight: .light))
-                    .foregroundStyle(.white.opacity(0.3))
+                // Fallback gradient if no images
+                if template.beforeImageName.isEmpty && template.afterImageName.isEmpty {
+                    Color.white
+                    LinearGradient(
+                        colors: gradientColors(for: template.category),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Image(systemName: template.category.iconName)
+                        .font(.system(size: 32, weight: .light))
+                        .foregroundStyle(.white.opacity(0.3))
+                }
             }
             .overlay(
-                // Elegant inner border for definition
                 RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
                     .stroke(Color.black.opacity(0.05), lineWidth: 1)
             )
@@ -52,8 +71,14 @@ struct TemplateCardView: View {
             }
             .padding(AppTheme.Spacing.md)
         }
-        .aspectRatio(0.75, contentMode: .fill) // Ensure it fills the frame
+        .aspectRatio(0.75, contentMode: .fill)
         .templateCardStyle()
+        .onReceive(timer) { _ in
+            guard !template.beforeImageName.isEmpty, !template.afterImageName.isEmpty else { return }
+            withAnimation(.easeInOut(duration: 0.8)) {
+                showingAfter.toggle()
+            }
+        }
     }
 
     private func gradientColors(for category: TemplateCategory) -> [Color] {

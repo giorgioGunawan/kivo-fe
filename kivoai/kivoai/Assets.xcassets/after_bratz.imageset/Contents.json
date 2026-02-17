@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "after_bratz.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

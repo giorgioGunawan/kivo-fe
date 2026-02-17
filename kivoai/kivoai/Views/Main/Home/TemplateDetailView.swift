@@ -185,6 +185,13 @@ struct TemplateDetailView: View {
 
     // MARK: - Photo Section
 
+    private var exampleImageName: String {
+        if let variant = currentVariant, !variant.afterImageName.isEmpty {
+            return variant.afterImageName
+        }
+        return template.afterImageName
+    }
+
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
             if let image = selectedImage {
@@ -206,15 +213,15 @@ struct TemplateDetailView: View {
                     }
                     .padding(10)
                 }
-            } else if let variant = currentVariant,
-                      let exampleImage = UIImage(named: variant.exampleImageName) {
-                // Show the style's example image as a preview
+            } else if !exampleImageName.isEmpty,
+                      let exampleImg = UIImage(named: exampleImageName) {
                 ZStack(alignment: .bottomLeading) {
-                    Image(uiImage: exampleImage)
+                    Image(uiImage: exampleImg)
                         .resizable()
                         .scaledToFill()
                         .frame(height: 260)
                         .clipShape(RoundedRectangle(cornerRadius: 24))
+                        .animation(.easeInOut(duration: 0.3), value: exampleImageName)
 
                     Text("Example")
                         .font(.system(size: 11, weight: .semibold))
@@ -224,6 +231,8 @@ struct TemplateDetailView: View {
                         .background(Capsule().fill(Color.black.opacity(0.5)))
                         .padding(12)
                 }
+                .id(exampleImageName)
+                .transition(.opacity)
             } else {
                 RoundedRectangle(cornerRadius: 24)
                     .fill(AppTheme.Colors.secondaryBackground)
@@ -235,6 +244,7 @@ struct TemplateDetailView: View {
                     }
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: selectedStyleIndex)
     }
 
     // MARK: - Style Pills Section
