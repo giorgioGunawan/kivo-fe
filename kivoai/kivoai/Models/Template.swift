@@ -71,7 +71,7 @@ struct Template: Identifiable, Hashable {
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Shatter the TV screen with a realistic spider-web crack.",
+            basePrompt: "Shatter the TV screen with a realistic crack.",
             photographHint: "Straight-on photo of your full TV. Turn it off for best results.",
             exampleDescription: "Your TV screen shattered into a million pieces"
         ),
@@ -83,7 +83,7 @@ struct Template: Identifiable, Hashable {
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Shatter the windshield with realistic spider-web cracks from a central impact point.",
+            basePrompt: "Add a small, realistic windshield crack starting from a single impact point. Subtle fracture about 5–10 cm wide. Keep the rest of the glass intact. Natural transparency and light reflection.",
             photographHint: "Shoot forward through the windshield from the driver or passenger seat.",
             exampleDescription: "Your windshield smashed with a massive crack web"
         ),
@@ -107,7 +107,7 @@ struct Template: Identifiable, Hashable {
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Transform into a realistic police mugshot with a height-chart background and booking placard.",
+            basePrompt: "Generate a realistic mugshot of the person wearing orange prison clothes. The photo should be cropped from head to upper chest.  The face should resemble the face from the uploaded photo. the expression should be serious and dramatic. The background should be a realistic prison.",
             photographHint: "Straight-on headshot against a plain wall, neutral expression, even lighting.",
             exampleDescription: "A dead-serious, totally believable police mugshot"
         ),
@@ -119,7 +119,7 @@ struct Template: Identifiable, Hashable {
             category: .pranks,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Convert into grainy overhead CCTV footage with a 'CAM 04' overlay.",
+            basePrompt: "Overhead grainy CCTV footage inside a grocery store, ceiling-mounted corner security camera looking sharply downward (top-down angle). Low-res, digital noise, compression artifacts, slight wide-angle lens distortion. Add 'CAM 04' overlay. Person looks suddenly shocked and tense, caught mid-suspicious act. Freeze-frame surveillance vibe.",
             photographHint: "Any store aisle or corridor. A slightly elevated angle looks most like surveillance.",
             exampleDescription: "You caught doing something suspicious on a store security cam"
         ),
@@ -180,12 +180,6 @@ struct Template: Identifiable, Hashable {
                     title: "Pixie Cut",
                     prompt: "Give the subject a sharp, textured pixie cut.",
                     exampleImageName: "style_womens_hair_pixie_cut"
-                ),
-                TemplateStyleVariant(
-                    id: "womens_hair_hollywood",
-                    title: "Hollywood",
-                    prompt: "Give the subject a glamorous Hollywood blowout with voluminous silky waves.",
-                    exampleImageName: "style_womens_hair_hollywood"
                 )
             ]
         ),
@@ -274,28 +268,27 @@ struct Template: Identifiable, Hashable {
 
         Template(
             id: "cartoon_action_figure",
-            title: "Toy Box / Action Figure",
+            title: "Action Figure",
             subtitle: "Boxed and ready for the shelf",
             category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Place the subject as a boxed action figure in colorful toy packaging.",
+            basePrompt: "Create a 1/7 scale commercialized figurine of the characters in the picture, in a realistic style, in a real environment. The figurine is placed on a computer desk. The figurine has a round transparent acrylic base, with no text on the base. The content on the computer screen is a 3D modeling process of this figurine. Next to the computer screen is a toy packaging box, designed in a style reminiscent of high-quality collectible figures, printed with original artwork.",
             photographHint: "Full-body photo, standing straight, plain background.",
             exampleDescription: "You as a boxed action figure on a store shelf"
         ),
 
         Template(
-            id: "cartoon_ghibli",
-            title: "Japanese Animation",
-            subtitle: "Soft, painterly, and magical",
+            id: "cartoon_funko_pop",
+            title: "Funko Pop",
+            subtitle: "Vinyl collectible version of you",
             category: .cartoon,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Transform into a hand-painted Japanese animation character illustration with expressive eyes, soft linework, and a painterly background.",
-            photographHint: "Clear headshot or waist-up, natural expression.",
-            exampleDescription: "You as a character in a Japanese animated film"
+            basePrompt: "Create a detailed 3D render of a chibi Funko Pop figure, strictly based on the provided reference photo. The figure should accurately reflect the person's appearance, hairstyle, attire, and characteristic style from the photo. High detail, studio lighting, photorealistic texture, pure white background.",
+            photographHint: "Clear headshot or chest-up, face and outfit visible.",
+            exampleDescription: "A detailed Funko Pop figure version of you"
         ),
-
 
         // MARK: - FACE TRANSFORMATIONS (5)
 
@@ -306,7 +299,7 @@ struct Template: Identifiable, Hashable {
             category: .faceTransformations,
             creditCost: 10,
             requiresPhoto: true,
-            basePrompt: "Transform the subject into an adorable baby version of themselves.",
+            basePrompt: "Transform the subject into an adorable baby version of themselves wearing baby clothes, make sure theres obvious similar features and change the background.",
             photographHint: "Clear straight-on headshot, even lighting, plain background.",
             exampleDescription: "An adorable baby version of your exact face"
         ),
@@ -333,18 +326,6 @@ struct Template: Identifiable, Hashable {
             basePrompt: "De-age the subject by 10–15 years with smoother skin and a fresher complexion.",
             photographHint: "Clear headshot in even lighting, relaxed expression.",
             exampleDescription: "A realistic younger version of your face"
-        ),
-
-        Template(
-            id: "face_weight_gain",
-            title: "Weight Gain",
-            subtitle: "A little more of you",
-            category: .faceTransformations,
-            creditCost: 10,
-            requiresPhoto: true,
-            basePrompt: "Make the subject look noticeably heavier with a fuller face and rounder cheeks.",
-            photographHint: "Chest-up or waist-up, straight-on angle, even lighting.",
-            exampleDescription: "A natural-looking weight gain transformation"
         ),
 
 
