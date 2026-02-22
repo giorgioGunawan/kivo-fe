@@ -90,7 +90,10 @@ struct SettingsView: View {
                     deleteAccount()
                 }
             } message: {
-                Text("This will permanently delete your account and associated data. This action cannot be undone.")
+                Text("This will permanently delete your account and associated data. This action cannot be undone."
+                     + (appState.isProSubscriber
+                        ? "\n\nYou have an active subscription. Please cancel it in Settings > Subscriptions to avoid being charged."
+                        : ""))
             }
             .alert("Error", isPresented: .init(
                 get: { deleteError != nil },
