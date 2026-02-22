@@ -19,7 +19,7 @@ class AuthManager: NSObject, ObservableObject {
     private let tokenAccount = "accessToken"
     private let userAccount = "userIdentifier"
     
-    init(backend: AuthBackend = MockAuthBackend()) {
+    init(backend: AuthBackend = RealAuthBackend()) {
         self.backend = backend
         super.init()
         self.isAuthenticated = getAccessToken() != nil

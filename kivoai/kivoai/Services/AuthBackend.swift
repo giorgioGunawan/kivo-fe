@@ -43,12 +43,6 @@ class RealAuthBackend: AuthBackend {
     }
 }
 
-class MockAuthBackend: AuthBackend {
-    func exchangeAppleToken(identityToken: String, userIdentifier: String) async throws -> AuthResponse {
-        return AuthResponse(accessToken: "mock_token", userIdentifier: userIdentifier)
-    }
-}
-
 struct BackendAuthResponse: Decodable {
     let token: String
 }
