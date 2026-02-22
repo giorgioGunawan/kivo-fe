@@ -10,6 +10,10 @@ struct SettingsView: View {
     @EnvironmentObject var appEnvironment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showingDeleteConfirmation = false
+    @State private var isDeleting = false
+    @State private var deleteError: String?
+
     var body: some View {
         NavigationStack {
             List {
@@ -45,10 +49,30 @@ struct SettingsView: View {
                         } label: {
                             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                         }
+
+                        Button(role: .destructive) {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label("Delete Account", systemImage: "trash")
+                        }
                     } else {
                         Text("Not signed in")
                             .foregroundStyle(AppTheme.Colors.textTertiary)
                     }
+                }
+
+                Section("Legal") {
+                    NavigationLink {
+                        AcceptableUsePolicyView()
+                    } label: {
+                        Label("Acceptable Use Policy", systemImage: "doc.text")
+                    }
+                }
+
+                Section {
+                    Text("Images are processed securely. Kivo AI does not permanently store your photos.")
+                        .font(.footnote)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
                 }
             }
             .navigationTitle("Settings")
@@ -60,9 +84,82 @@ struct SettingsView: View {
                     }
                 }
             }
+            .alert("Delete Account?", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("This will permanently delete your account and associated data. This action cannot be undone.")
+            }
+            .alert("Error", isPresented: .init(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("OK") { deleteError = nil }
+            } message: {
+                Text(deleteError ?? "")
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        isDeleting = true
+        Task {
+            do {
+                try await appEnvironment.apiClient.deleteAccount()
+                appState.resetAll()
+                appEnvironment.authManager.signOut()
+                dismiss()
+            } catch {
+                deleteError = "Failed to delete account. Please try again or contact support."
+            }
+            isDeleting = false
         }
     }
 }
+
+// MARK: - Acceptable Use Policy
+
+private struct AcceptableUsePolicyView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Acceptable Use Policy")
+                    .font(.title2.bold())
+
+                Group {
+                    policyItem("No Illegal Content", description: "Do not use Kivo AI to generate content that violates any applicable laws or regulations.")
+
+                    policyItem("No Explicit Sexual Content", description: "Creating sexually explicit or pornographic imagery is strictly prohibited.")
+
+                    policyItem("No Harassment or Impersonation", description: "Do not use Kivo AI to harass, bully, or impersonate others.")
+
+                    policyItem("No Non-Consensual Edits", description: "Do not create or distribute edited images of real people without their consent.")
+                }
+
+                Text("Violation of these guidelines may result in account suspension or termination.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+            }
+            .padding(24)
+        }
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func policyItem(_ title: String, description: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.headline)
+            Text(description)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Copyable Row
 
 private struct CopyableRow: View {
     let label: String

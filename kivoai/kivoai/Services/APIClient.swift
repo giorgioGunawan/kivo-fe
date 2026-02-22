@@ -92,6 +92,10 @@ class APIClient {
         return uploadResponse.url
     }
     
+    func deleteAccount() async throws {
+        let _: EmptyResponse = try await performRequest(endpoint: "user", method: "DELETE")
+    }
+
     func fetchBalance() async throws -> CreditBalance {
         return try await performRequest(endpoint: "credits/balance")
     }
