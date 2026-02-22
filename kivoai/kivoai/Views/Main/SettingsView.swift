@@ -30,7 +30,7 @@ struct SettingsView: View {
                 #endif
 
                 Section("Support") {
-                    CopyableRow(label: "Contact Us", value: "onesmllab@gmail.com")
+                    CopyableRow(label: "Contact Us", value: "kivoai@protonmail.com")
                 }
 
                 Section("Account") {
