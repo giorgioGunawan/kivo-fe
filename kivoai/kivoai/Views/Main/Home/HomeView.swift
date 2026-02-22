@@ -32,6 +32,7 @@ struct HomeView: View {
                 }
             }
             .background(AppTheme.Colors.background)
+            .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -46,6 +47,16 @@ struct HomeView: View {
                     .buttonStyle(.plain)
                 }
                 
+                ToolbarItem(placement: .principal) {
+                    if let logo = UIImage(named: "kivologo") {
+                        Image(uiImage: logo)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 38)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     unifiedCreditPill
                 }
@@ -143,7 +154,7 @@ struct HomeView: View {
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(AppTheme.Colors.textPrimary)
                 .padding(.horizontal, AppTheme.Spacing.lg)
-                .padding(.top, AppTheme.Spacing.lg)
+                .padding(.top, 8)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AppTheme.Spacing.md) {
@@ -381,20 +392,9 @@ struct CustomCardView: View {
                 endPoint: .bottomTrailing
             )
 
-            VStack(spacing: 10) {
-                ZStack {
-                    Circle()
-                        .stroke(.white.opacity(0.2), lineWidth: 1.5)
-                        .frame(width: 52, height: 52)
-                    Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.85))
-                }
-
-                Text("Custom")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-            }
+            Text("Create")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
 
             RoundedRectangle(cornerRadius: AppTheme.Radius.lg, style: .continuous)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
