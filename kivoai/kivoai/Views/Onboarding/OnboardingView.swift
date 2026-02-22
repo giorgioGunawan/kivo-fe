@@ -31,7 +31,7 @@ struct OnboardingView: View {
                     InterestsPage(selectedOptionIds: $selectedOptionIds, categoryOrder: $categoryOrder)
                         .tag(OnboardingStep.interests)
 
-                    HowItWorksPage()
+                    HowItWorksPage(isVisible: currentStep == .howItWorks)
                         .tag(OnboardingStep.howItWorks)
 
                     RatingPage(rating: $rating)
@@ -310,8 +310,9 @@ private struct InterestCard: View {
 // MARK: - Page 3: How It Works
 
 private struct HowItWorksPage: View {
+    let isVisible: Bool
     @State private var animationPhase: Int = 0
-    @State private var isActive: Bool = false
+    @State private var hasAnimated: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -373,43 +374,28 @@ private struct HowItWorksPage: View {
 
             Spacer()
         }
-        .onAppear {
-            isActive = true
-            startLoop()
-        }
-        .onDisappear {
-            isActive = false
+        .onChange(of: isVisible) { _, visible in
+            guard visible, !hasAnimated else { return }
+            hasAnimated = true
+            startAnimation()
         }
     }
 
-    private func startLoop() {
+    private func startAnimation() {
         animationPhase = 0
-        scheduleNext()
-    }
 
-    private func scheduleNext() {
-        guard isActive else { return }  // Stop if view is no longer active
-        
-        // TIMING CONFIGURATION (adjust these values as needed)
-        let phase1Duration: Double = 1.5  // Before image visible
-        let phase2Duration: Double = 1.5  // Prompt pill visible
-        let phase3Duration: Double = 5.0  // After image visible (includes hold before loop)
-        
-        let currentDuration: Double
-        switch animationPhase {
-        case 0: currentDuration = phase1Duration
-        case 1: currentDuration = phase2Duration
-        case 2: currentDuration = phase3Duration
-        default: currentDuration = 1.5
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + currentDuration) {
-            guard isActive else { return }  // Double-check before animating
-            
+        // Show prompt pill quickly
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             withAnimation(.easeInOut(duration: 0.5)) {
-                animationPhase = (animationPhase + 1) % 3  // Loop back to 0 after 2
+                animationPhase = 1
             }
-            scheduleNext()
+
+            // Show after image
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    animationPhase = 2
+                }
+            }
         }
     }
 }
